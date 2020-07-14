@@ -1,0 +1,59 @@
+;;;; -*- mode: Lisp; syntax: ANSI-Common-Lisp; indent-tabs-mode: nil; coding: utf-8; show-trailing-whitespace: t -*-
+;;;; test-problem.dat
+;;;;
+;;;; Copyright (c) 2020 Angelo Rossi
+;;;;
+;; This file is part of Loadflow (LF).
+;;
+;;    Loadflow (LF) is free software: you can redistribute it and/or modify
+;;    it under the terms of the GNU General Public License as published by
+;;    the Free Software Foundation, either version 3 of the License, or
+;;    (at your option) any later version.
+;;
+;;    Loadflow (LF) is distributed in the hope that it will be useful,
+;;    but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;    GNU General Public License for more details.
+;;
+;;    You should have received a copy of the GNU General Public License
+;;    along with Loadflow (LF).  If not, see <http://www.gnu.org/licenses/>.
+
+#s(problem-struct :name "test-problem-9"
+                  :solver-type :newton-raphson-polar
+                  :maximum-iterations-count 200
+                  :epsilon-power #c(2d0 2d0)
+                  :alpha #(7.3d-1 7.3d-1 7.3d-1 7.3d-1 7.3d-1 7.3d-1)
+                  :frequency 50d0
+                  :author "Angelo Rossi"
+                  :date 3802933200
+                  :network (#s(node-struct :name node-0
+                                           :kind :reference
+                                           :data (:voltage-magnitude 0d0 :voltage-phase 0d0))
+                            #s(node-struct :name node-101
+                                           :kind :generation
+                                           :bond #s(bond-struct :name generator-101
+                                                                :kind :v-theta
+                                                                :voltage-magnitude 230d0
+                                                                :voltage-phase 0d0))
+                            #s(node-struct :name node-102
+                                           :kind :load
+                                           :bond #s(bond-struct :name load-101
+                                                                :kind :p-q
+                                                                :active-power 20d3
+                                                                :reactive-power 15d3)
+                                           :data (:voltage-magnitude 230d0 :voltage-phase 0d0))
+                            #s(node-struct :name node-103
+                                           :kind :load
+                                           :bond #s(bond-struct :name load-102
+                                                                :kind :p-q
+                                                                :active-power 10d3
+                                                                :reactive-power 2d3)
+                                           :data (:voltage-magnitude 230d0 :voltage-phase 0d0))
+                            #s(bipole-struct :name line-101
+                                             :kind :impedance
+                                             :model-parameters (:value #c(0d0 50d-3))
+                                             :nodes (node-101 node-102))
+                            #s(bipole-struct :name line-102
+                                             :kind :impedance
+                                             :model-parameters (:value #c(0d0 50d-3))
+                                             :nodes (node-102 node-103))))

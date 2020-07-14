@@ -1,0 +1,105 @@
+;;;; -*- mode: Lisp; syntax: ANSI-Common-Lisp; indent-tabs-mode: nil; coding: utf-8; show-trailing-whitespace: t -*-
+;;;; test-problem.dat
+;;;;
+;;;; Copyright (c) 2020 Angelo Rossi
+;;;;
+;; This file is part of Loadflow (LF).
+;;
+;;    Loadflow (LF) is free software: you can redistribute it and/or modify
+;;    it under the terms of the GNU General Public License as published by
+;;    the Free Software Foundation, either version 3 of the License, or
+;;    (at your option) any later version.
+;;
+;;    Loadflow (LF) is distributed in the hope that it will be useful,
+;;    but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;    GNU General Public License for more details.
+;;
+;;    You should have received a copy of the GNU General Public License
+;;    along with Loadflow (LF).  If not, see <http://www.gnu.org/licenses/>.
+
+#s(problem-struct :name "test-problem-12"
+                  :solver-type :newton-raphson-polar
+                  :maximum-iterations-count 400
+                  :epsilon-power #c(10d0 10d0)
+                  :alpha #(2.9d-1 2.9d-1 2.9d-1 2.9d-1 2.9d-1 2.9d-1 2.9d-1 2.9d-1 2.9d-1 2.9d-1)
+                  :frequency 50d0
+                  :author "Angelo Rossi"
+                  :date 3802933200
+                  :date-modified 3803187614
+                  :network (#s(node-struct :name node-0
+                                           :kind :reference
+                                           :data (:voltage-magnitude 0d0 :voltage-phase 0d0))
+                            #s(node-struct :name node-001
+                                           :kind :generation
+                                           :bond #s(bond-struct :name generator-001
+                                                                :kind :v-theta
+                                                                :voltage-magnitude 230d0
+                                                                :voltage-phase 0d0))
+                            #s(node-struct :name node-002
+                                           :kind :load
+                                           :bond #s(bond-struct :name load-002
+                                                                :kind :p-q
+                                                                :active-power 1d3
+                                                                :reactive-power 1d3)
+                                           :data (:voltage-magnitude 230d0 :voltage-phase 0d0))
+                            #s(node-struct :name node-003
+                                           :kind :load
+                                           :bond #s(bond-struct :name load-003
+                                                                :kind :p-q
+                                                                :active-power 10d3
+                                                                :reactive-power 2d3)
+                                           :data (:voltage-magnitude 230d0 :voltage-phase 0d0))
+                            #s(node-struct :name node-004
+                                           :kind :load
+                                           :bond #s(bond-struct :name load-004
+                                                                :kind :p-q
+                                                                :active-power 20d3
+                                                                :reactive-power 20d3)
+                                           :data (:voltage-magnitude 230d0 :voltage-phase 0d0))
+                            #s(node-struct :name node-005
+                                           :kind :load
+                                           :bond #s(bond-struct :name load-005
+                                                                :kind :p-q
+                                                                :active-power 2d3
+                                                                :reactive-power 0.2d3)
+                                           :data (:voltage-magnitude 230d0 :voltage-phase 0d0))
+                            #s(bipole-struct :name line-001
+                                             :kind :impedance
+                                             :model-parameters (:value #c(4d-3 0d0))
+                                             :nodes (node-001 node-002))
+                            #s(bipole-struct :name line-002
+                                             :kind :impedance
+                                             :model-parameters (:value #c(4d-3 0d0))
+                                             :nodes (node-002 node-003))
+                            #s(bipole-struct :name line-003
+                                             :kind :impedance
+                                             :model-parameters (:value #c(8d-3 0d0))
+                                             :nodes (node-003 node-004))
+                            #s(bipole-struct :name line-004
+                                             :kind :impedance
+                                             :model-parameters (:value #c(8d-3 0d0))
+                                             :nodes (node-004 node-005))))
+
+
+;;                                     Y1           Y2           Y3           Y4
+;; V = 230 V, theta = 0 rad -->--O----WWWW----O----WWWW----O----WWWW----O----WWWW----O
+;;                             1            2 |          3 |          4 |          5 |
+;;                                            |            |            |            |
+;;                                            V            V            V            V
+;;                                            |            |            |            |
+;;                                            |            |            |            |
+;;                                           N(2)         N(3)         N(4)         N(5)
+;;                               O
+;;                             0 |
+;;                              ---
+;;                              ///
+;;
+;; N(2) = (1 + j1) kVA
+;; N(3) = (10 + j2) kVA
+;; N(4) = (20 + j20) kVA
+;; N(5) = (1 + j0.1) kVA
+;; Y1 = 1 mOhm
+;; Y2 = 1 mOhm
+;; Y3 = 1 mOhm
+;; Y4 = 1 mOhm

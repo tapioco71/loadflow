@@ -1,0 +1,117 @@
+;;;; -*- mode: Lisp; syntax: ANSI-Common-Lisp; indent-tabs-mode: nil; coding: utf-8; show-trailing-whitespace: t -*-
+;;;; test-problem.dat
+;;;;
+;;;; Copyright (c) 2020 Angelo Rossi
+;;;;
+;; This file is part of Loadflow (LF).
+;;
+;;    Loadflow (LF) is free software: you can redistribute it and/or modify
+;;    it under the terms of the GNU General Public License as published by
+;;    the Free Software Foundation, either version 3 of the License, or
+;;    (at your option) any later version.
+;;
+;;    Loadflow (LF) is distributed in the hope that it will be useful,
+;;    but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;    GNU General Public License for more details.
+;;
+;;    You should have received a copy of the GNU General Public License
+;;    along with Loadflow (LF).  If not, see <http://www.gnu.org/licenses/>.
+
+#s(problem-struct :name "test-problem-6"
+                  :solver-type :newton-raphson-polar
+                  :maximum-iterations-count 5
+                  :epsilon-power #c(1d0 1d0)
+                  :frequency 50d0
+                  :author "Angelo Rossi"
+                  :date 3802517913
+                  :network (#s(node-struct :name node-0
+                                           :kind :reference)
+                            #s(node-struct :name node-1
+                                           :kind :generation
+                                           :bond #s(bond-struct :name bond-101
+                                                                :kind :v-theta
+                                                                :voltage-magnitude 230d0
+                                                                :voltage-phase 0d0))
+                            #s(node-struct :name node-2
+                                           :kind :interconnection
+                                           :data (:voltage-magnitude 230d0 :voltage-phase 0d0))
+                            #s(node-struct :name node-3
+                                           :kind :interconnection
+                                           :data (:voltage-magnitude 230d0 :voltage-phase 0d0))
+                            #s(node-struct :name node-4
+                                           :kind :interconnection
+                                           :data (:voltage-magnitude 230d0 :voltage-phase 0d0))
+                            #s(node-struct :name node-5
+                                           :kind :load
+                                           :bond #s(bond-struct :name bond-105
+                                                                :kind :p-q
+                                                                :active-power 1667d0
+                                                                :reactive-power 333d0)
+                                           :data (:voltage-magnitude 230d0 :voltage-phase 0d0))
+                            #s(node-struct :name node-6
+                                           :kind :load
+                                           :bond #s(bond-struct :name bond-106
+                                                                :kind :p-q
+                                                                :active-power 6667d0
+                                                                :reactive-power 5000d0)
+                                           :data (:voltage-magnitude 230d0 :voltage-phase 0d0))
+
+                            ;; cable 1
+
+                            #s(bipole-struct :name bipole-1
+                                             :kind :capacitance
+                                             :nodes (node-0 node-1)
+                                             :model-parameters (:value 75d-12))
+                            #s(bipole-struct :name bipole-2
+                                             :kind :resistance
+                                             :nodes (node-1 node-2)
+                                             :model-parameters (:value 72d-3))
+                            #s(bipole-struct :name bipole-3
+                                             :kind :capacitance
+                                             :nodes (node-0 node-2)
+                                             :model-parameters (:value 75d-12))
+
+                            ;; switch S1
+
+                            #s(bipole-struct :name bipole-4
+                                             :kind :resistance
+                                             :nodes (node-2 node-3)
+                                             :model-parameters (:value 932d-6))
+
+                            ;; switch S2
+
+                            #s(bipole-struct :name bipole-5
+                                             :kind :resistance
+                                             :nodes (node-3 node-4)
+                                             :model-parameters (:value 932d-6))
+
+                            ;; cable 2
+
+                            #s(bipole-struct :name bipole-6
+                                             :kind :capacitance
+                                             :nodes (node-0 node-4)
+                                             :model-parameters (:value 30d-12))
+                            #s(bipole-struct :name bipole-7
+                                             :kind :resistance
+                                             :nodes (node-4 node-5)
+                                             :model-parameters (:value 252d-3))
+                            #s(bipole-struct :name bipole-8
+                                             :kind :capacitance
+                                             :nodes (node-0 node-5)
+                                             :model-parameters (:value 30d-12))
+
+                            ;; cable 3
+
+                            #s(bipole-struct :name bipole-9
+                                             :kind :capacitance
+                                             :nodes (node-0 node-4)
+                                             :model-parameters (:value 50d-12))
+                            #s(bipole-struct :name bipole-10
+                                             :kind :resistance
+                                             :nodes (node-4 node-6)
+                                             :model-parameters (:value 105d-3))
+                            #s(bipole-struct :name bipole-11
+                                             :kind :capacitance
+                                             :nodes (node-0 node-6)
+                                             :model-parameters (:value 50d-12))))

@@ -1,0 +1,52 @@
+;;;; -*- mode: Lisp; syntax: ANSI-Common-Lisp; indent-tabs-mode: nil; coding: utf-8; show-trailing-whitespace: t -*-
+;;;; test-problem.dat
+;;;;
+;;;; Copyright (c) 2020 Angelo Rossi
+;;;;
+;; This file is part of Loadflow (LF).
+;;
+;;    Loadflow (LF) is free software: you can redistribute it and/or modify
+;;    it under the terms of the GNU General Public License as published by
+;;    the Free Software Foundation, either version 3 of the License, or
+;;    (at your option) any later version.
+;;
+;;    Loadflow (LF) is distributed in the hope that it will be useful,
+;;    but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;    GNU General Public License for more details.
+;;
+;;    You should have received a copy of the GNU General Public License
+;;    along with Loadflow (LF).  If not, see <http://www.gnu.org/licenses/>.
+
+#s(problem-struct :name "test-problem"
+                  :solver-type :newton-raphson-polar
+                  :maximum-iterations-count 5
+                  :epsilon-power #c(1d1 1d1)
+                  :frequency 50d0
+                  :author "Angelo Rossi"
+                  :date 3800422183
+                  :network (#s(node-struct :name node-0
+                                           :kind :reference)
+                            #s(node-struct :name node-1
+                                           :kind :generation
+                                           :bond #s(bond-struct :kind :v-theta
+                                                                :voltage-magnitude 230d0
+                                                                :voltage-phase 0d0))
+                            #s(node-struct :name node-2
+                                           :kind :load
+                                           :bond #s(bond-struct :kind :p-q
+                                                                :active-power 13.3d3
+                                                                :reactive-power 4.4d3)
+                                           :data (:voltage-magnitude 230d0 :voltage-phase 0d0))
+                            #s(bipole-struct :name bipole-1
+                                             :kind :capacitance
+                                             :nodes (node-0 node-1)
+                                             :model-parameters (:value 1d-12))
+                            #s(bipole-struct :name bipole-2
+                                             :kind :impedance
+                                             :nodes (node-1 node-2)
+                                             :model-parameters (:value #c(108d-3 1d-8)))
+                            #s(bipole-struct :name bipole-3
+                                             :kind :capacitance
+                                             :nodes (node-2 node-0)
+                                             :model-parameters (:value 1d-12))))

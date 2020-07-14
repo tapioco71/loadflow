@@ -1,0 +1,236 @@
+# loadflow
+### _Angelo Rossi <angelo.rossi.homelab@gmail.com>_
+
+This is a very basic and simple powerflow calculating program.
+As example look at test cases in data/*.dat
+
+To simulate a case:
+
+CL-USER> (lf::loadflow :problem-file-pathname #p"loadflow/data/test-problem-13.dat"
+                       :verbose 5)
+--> entering load-problem().
+--> Loading problem file #P"loadflow/data/test-problem-13.dat"
+#S(LOADFLOW::PROBLEM-STRUCT
+   :NAME "test-problem-13"
+   :SOLVER-TYPE :NEWTON-RAPHSON-POLAR
+   :MAXIMUM-ITERATIONS-COUNT 400
+   :EPSILON-POWER #C(10.0d0 10.0d0)
+   :ALPHA #m(0.290000000000000d0 0.290000000000000d0 0.290000000000000d0 0.290000000000000d0 0.290000000000000d0 0.290000000000000d0 0.290000000000000d0 0.290000000000000d0 0.290000000000000d0 0.290000000000000d0 0.290000000000000d0 0.290000000000000d0)
+   :FREQUENCY 50.0d0
+   :AUTHOR "Angelo Rossi"
+   :DATE 3802933200
+   :DATE-MODIFIED 3803187614
+   :NETWORK (#S(LOADFLOW::NODE-STRUCT
+                :NAME LOADFLOW::NODE-0
+                :KIND :REFERENCE
+                :DATA (:VOLTAGE-MAGNITUDE 0.0d0 :VOLTAGE-PHASE 0.0d0)
+                :BOND NIL)
+             #S(LOADFLOW::NODE-STRUCT
+                :NAME LOADFLOW::NODE-001
+                :KIND :GENERATION
+                :DATA NIL
+                :BOND #S(LOADFLOW::BOND-STRUCT
+                         :NAME LOADFLOW::GENERATOR-001
+                         :KIND :V-THETA
+                         :DATA 0
+                         :ACTIVE-POWER 0
+                         :REACTIVE-POWER 0
+                         :VOLTAGE-MAGNITUDE 230.0d0
+                         :VOLTAGE-PHASE 0.0d0))
+             #S(LOADFLOW::NODE-STRUCT
+                :NAME LOADFLOW::NODE-002
+                :KIND :LOAD
+                :DATA (:VOLTAGE-MAGNITUDE 230.0d0 :VOLTAGE-PHASE 0.0d0)
+                :BOND #S(LOADFLOW::BOND-STRUCT
+                         :NAME LOADFLOW::LOAD-002
+                         :KIND :P-Q
+                         :DATA 0
+                         :ACTIVE-POWER 1000.0d0
+                         :REACTIVE-POWER 1000.0d0
+                         :VOLTAGE-MAGNITUDE 0
+                         :VOLTAGE-PHASE 0))
+             #S(LOADFLOW::NODE-STRUCT
+                :NAME LOADFLOW::NODE-003
+                :KIND :LOAD
+                :DATA (:VOLTAGE-MAGNITUDE 230.0d0 :VOLTAGE-PHASE 0.0d0)
+                :BOND #S(LOADFLOW::BOND-STRUCT
+                         :NAME LOADFLOW::LOAD-003
+                         :KIND :P-Q
+                         :DATA 0
+                         :ACTIVE-POWER 10000.0d0
+                         :REACTIVE-POWER 2000.0d0
+                         :VOLTAGE-MAGNITUDE 0
+                         :VOLTAGE-PHASE 0))
+             #S(LOADFLOW::NODE-STRUCT
+                :NAME LOADFLOW::NODE-004
+                :KIND :LOAD
+                :DATA (:VOLTAGE-MAGNITUDE 230.0d0 :VOLTAGE-PHASE 0.0d0)
+                :BOND #S(LOADFLOW::BOND-STRUCT
+                         :NAME LOADFLOW::LOAD-004
+                         :KIND :P-Q
+                         :DATA 0
+                         :ACTIVE-POWER 20000.0d0
+                         :REACTIVE-POWER 20000.0d0
+                         :VOLTAGE-MAGNITUDE 0
+                         :VOLTAGE-PHASE 0))
+             #S(LOADFLOW::NODE-STRUCT
+                :NAME LOADFLOW::NODE-005
+                :KIND :LOAD
+                :DATA (:VOLTAGE-MAGNITUDE 230.0d0 :VOLTAGE-PHASE 0.0d0)
+                :BOND #S(LOADFLOW::BOND-STRUCT
+                         :NAME LOADFLOW::LOAD-005
+                         :KIND :P-Q
+                         :DATA 0
+                         :ACTIVE-POWER 2000.0d0
+                         :REACTIVE-POWER 200.0d0
+                         :VOLTAGE-MAGNITUDE 0
+                         :VOLTAGE-PHASE 0))
+             #S(LOADFLOW::NODE-STRUCT
+                :NAME LOADFLOW::NODE-006
+                :KIND :LOAD
+                :DATA (:VOLTAGE-MAGNITUDE 230.0d0 :VOLTAGE-PHASE 0.0d0)
+                :BOND #S(LOADFLOW::BOND-STRUCT
+                         :NAME LOADFLOW::LOAD-006
+                         :KIND :P-Q
+                         :DATA 0
+                         :ACTIVE-POWER 25000.0d0
+                         :REACTIVE-POWER 6000.0d0
+                         :VOLTAGE-MAGNITUDE 0
+                         :VOLTAGE-PHASE 0))
+             #S(LOADFLOW::BIPOLE-STRUCT
+                :NAME LOADFLOW::LINE-001
+                :KIND :IMPEDANCE
+                :DATA 0
+                :NODES (LOADFLOW::NODE-001 LOADFLOW::NODE-002)
+                :VOLTAGES (0.0d0 0.0d0)
+                :CURRENTS (0.0d0)
+                :MODEL-FUNCTION #<FUNCTION (LAMBDA (LOADFLOW::V LOADFLOW::I)
+                                             :IN
+                                             "/home/angel/Development/lisp/loadflow/sources/multipole.lisp") {5309094B}>
+                :MODEL-PARAMETERS (:VALUE #C(0.004d0 0.0d0)))
+             #S(LOADFLOW::BIPOLE-STRUCT
+                :NAME LOADFLOW::LINE-002
+                :KIND :IMPEDANCE
+                :DATA 0
+                :NODES (LOADFLOW::NODE-002 LOADFLOW::NODE-003)
+                :VOLTAGES (0.0d0 0.0d0)
+                :CURRENTS (0.0d0)
+                :MODEL-FUNCTION #<FUNCTION (LAMBDA (LOADFLOW::V LOADFLOW::I)
+                                             :IN
+                                             "/home/angel/Development/lisp/loadflow/sources/multipole.lisp") {5309094B}>
+                :MODEL-PARAMETERS (:VALUE #C(0.004d0 0.0d0)))
+             #S(LOADFLOW::BIPOLE-STRUCT
+                :NAME LOADFLOW::LINE-003
+                :KIND :IMPEDANCE
+                :DATA 0
+                :NODES (LOADFLOW::NODE-003 LOADFLOW::NODE-004)
+                :VOLTAGES (0.0d0 0.0d0)
+                :CURRENTS (0.0d0)
+                :MODEL-FUNCTION #<FUNCTION (LAMBDA (LOADFLOW::V LOADFLOW::I)
+                                             :IN
+                                             "/home/angel/Development/lisp/loadflow/sources/multipole.lisp") {5309094B}>
+                :MODEL-PARAMETERS (:VALUE #C(0.008d0 0.0d0)))
+             #S(LOADFLOW::BIPOLE-STRUCT
+                :NAME LOADFLOW::LINE-003A
+                :KIND :IMPEDANCE
+                :DATA 0
+                :NODES (LOADFLOW::NODE-003 LOADFLOW::NODE-006)
+                :VOLTAGES (0.0d0 0.0d0)
+                :CURRENTS (0.0d0)
+                :MODEL-FUNCTION #<FUNCTION (LAMBDA (LOADFLOW::V LOADFLOW::I)
+                                             :IN
+                                             "/home/angel/Development/lisp/loadflow/sources/multipole.lisp") {5309094B}>
+                :MODEL-PARAMETERS (:VALUE #C(0.016d0 0.0d0)))
+             #S(LOADFLOW::BIPOLE-STRUCT
+                :NAME LOADFLOW::LINE-004
+                :KIND :IMPEDANCE
+                :DATA 0
+                :NODES (LOADFLOW::NODE-004 LOADFLOW::NODE-005)
+                :VOLTAGES (0.0d0 0.0d0)
+                :CURRENTS (0.0d0)
+                :MODEL-FUNCTION #<FUNCTION (LAMBDA (LOADFLOW::V LOADFLOW::I)
+                                             :IN
+                                             "/home/angel/Development/lisp/loadflow/sources/multipole.lisp") {5309094B}>
+                :MODEL-PARAMETERS (:VALUE #C(0.008d0 0.0d0))))
+   :SOLUTION ((:VOLTAGES
+               #(#S(LOADFLOW::PHASOR-STRUCT :MAGNITUDE 230.0d0 :ARGUMENT 0.0d0)
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 228.9746977745245d0
+                    :ARGUMENT 0.0022167294582769127d0)
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 227.96796217629026d0
+                    :ARGUMENT 0.004376580688708192d0)
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 227.19217717512382d0
+                    :ARGUMENT 0.007494087213857925d0)
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 227.12174199435964d0
+                    :ARGUMENT 0.007523957870886487d0)
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 226.19919413366338d0
+                    :ARGUMENT 0.00623980288803622d0)))
+              (:CURRENTS
+               ((:BIPOLE-NAME LOADFLOW::LINE-004 :CURRENT
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 8.845157007542221d0
+                    :ARGUMENT -0.08852897564542886d0)
+                 :VOLTAGE-ACROSS
+                 #C(0.07048414570635941d0 -0.00625624194556007d0))
+                (:BIPOLE-NAME LOADFLOW::LINE-003A :CURRENT
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 113.66681872314832d0
+                    :ARGUMENT -0.22948983211109827d0)
+                 :VOLTAGE-ACROSS
+                 #C(1.7709882790408642d0 -0.41371222997633283d0))
+                (:BIPOLE-NAME LOADFLOW::LINE-003 :CURRENT
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 131.4109552457175d0
+                    :ARGUMENT -0.7348526380082291d0)
+                 :VOLTAGE-ACROSS
+                 #C(0.7799813822693125d0 -0.7048650576267336d0))
+                (:BIPOLE-NAME LOADFLOW::LINE-002 :CURRENT
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 280.2924911433745d0
+                    :ARGUMENT -0.45245021761710325d0)
+                 :VOLTAGE-ACROSS
+                 #C(1.0083563182372757d0 -0.49014245371392273d0))
+                (:BIPOLE-NAME LOADFLOW::LINE-001 :CURRENT
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 286.14141069774684d0
+                    :ARGUMENT -0.4594606675276092d0)
+                 :VOLTAGE-ACROSS
+                 #C(1.0258648034257192d0 -0.5075745420624017d0))))
+              (:BOND-CURRENTS
+               ((:BOND-NAME LOADFLOW::LOAD-006 :CURRENT
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 113.66052988311101d0
+                    :ARGUMENT 2.8998078699808936d0))
+                (:BOND-NAME LOADFLOW::LOAD-005 :CURRENT
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 8.849769760369725d0
+                    :ARGUMENT 3.0344000432277447d0))
+                (:BOND-NAME LOADFLOW::LOAD-004 :CURRENT
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 124.49491703079141d0
+                    :ARGUMENT 2.348700402978487d0))
+                (:BOND-NAME LOADFLOW::LOAD-003 :CURRENT
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 44.734527298617984d0
+                    :ARGUMENT 2.9398205130512043d0))
+                (:BOND-NAME LOADFLOW::LOAD-002 :CURRENT
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 6.176287494287673d0
+                    :ARGUMENT 2.353977760734068d0))
+                (:BOND-NAME LOADFLOW::GENERATOR-001 :CURRENT
+                 #S(LOADFLOW::PHASOR-STRUCT
+                    :MAGNITUDE 286.14141069773916d0
+                    :ARGUMENT -0.45946066752763964d0))))
+              (:ITERATION-COUNT 150))
+   :DATA NIL)
+
+The program returns this structure containing the problem plus results
+on successfully computations or nil if there's no solution.
+
+## GPLv3
+
+GNU Public Licens Version 3.
