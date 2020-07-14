@@ -130,22 +130,24 @@
                       verbose))
   (when problem-file-pathname-p
     (check-type problem-file-pathname pathname))
-  (when verbose
-    (printout :message "entering load-problem().~&"))
+  (when (integerp verbose)
+    (when (> verbose 5)
+      (printout :message "entering load-problem().~&")))
   (let ((*package* (find-package 'loadflow))
         (data nil)
         (ok? nil))
     (with-open-file (s problem-file-pathname)
-      (when verbose
-        (printout :message "Loading problem file ~s~&" problem-file-pathname))
+      (when (integerp verbose)
+        (when (> verbose 10)
+          (printout :message "Loading problem file ~s~&" problem-file-pathname)))
       (setq data (read s)
             ok? t))
-    (when (and verbose-p
-               (> verbose 10))
-      (printout :message "problem = ~s.~&" data))
-    (when (and verbose-p
-               (> verbose 5))
-      (printout :message "exiting load-problem().~%~%"))
+    (when (integerp verbose)
+      (when (> verbose 10)
+        (printout :message "problem = ~s.~&" data)))
+    (when (integerp verbose)
+      (when (> verbose 5)
+        (printout :message "exiting load-problem().~%~%")))
     (values data
             ok?)))
 
