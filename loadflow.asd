@@ -28,6 +28,7 @@
   :components ((:file "sources/package")
                (:file "sources/message")
                (:file "sources/electrical")
+               (:file "sources/model")
                (:file "sources/network-element")
                (:file "sources/bond")
                (:file "sources/node")

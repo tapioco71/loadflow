@@ -25,7 +25,8 @@
 (defparameter *bond-kinds* '(:p-v
                              :q-v
                              :p-q
-                             :v-theta))
+                             :v-theta
+                             :v=f(Q)))
 
 ;; Structures.
 
@@ -34,7 +35,8 @@
   (active-power nil :type (or real null))
   (reactive-power nil :type (or real null))
   (voltage-magnitude nil :type (or real null))
-  (voltage-phase nil :type (or real null)))
+  (voltage-phase nil :type (or real null))
+  (model nil :type (or model-struct null)))
 
 ;; Functions.
 

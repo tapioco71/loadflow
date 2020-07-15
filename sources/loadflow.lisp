@@ -99,7 +99,10 @@
                                (when (> verbose 10)
                                  (printout :message "applying voltage phasor initial value: ~s.~&" (node-struct-data node))))
                              (setf (grid:gref voltages-vector node-number) (getf (node-struct-data node) :voltage-magnitude)
-                                   (grid:gref thetas-vector node-number) (getf (node-struct-data node) :voltage-phase)))))
+                                   (grid:gref thetas-vector node-number) (getf (node-struct-data node) :voltage-phase)))
+                            (:v=f(Q)
+                              (setf (grid:gref voltages-vector node-number) (getf (node-struct-data node) :voltage-magnitude)
+                                    (grid:gref thetas-vector node-number) (getf (node-struct-data node) :voltage-phase)))))
                          (:interconnection
                           (when (integerp verbose)
                             (when (> verbose 10)
@@ -256,6 +259,8 @@
                                      (grid:gref delta-q-vector node-number) 0d0))))
                            (:load
                             (case (bond-struct-kind (node-struct-bond node))
+                              (:v=f(Q)
+                                ())
                               (:p-q
                                (setf (grid:gref p-vector node-number) (nodal-active-power node-number
                                                                                           voltages-vector
