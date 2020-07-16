@@ -859,7 +859,7 @@
                           (case (bond-struct-kind (node-struct-bond node))
                             (:p-q
                              (incf (grid:gref voltages-vector node-number) (if (problem-struct-alpha problem)
-                                                                               (* (grid:gref (problem-struct-alpha problem) (+ (grid:dim0 thetas-vector) node-number))
+                                                                               (* (grid:gref (problem-struct-alpha problem) (+ (grid:dim0 delta-thetas-vector) node-number))
                                                                                   (grid:gref delta-voltages-vector node-number))
                                                                                (grid:gref delta-voltages-vector node-number)))
                              (incf (grid:gref thetas-vector node-number) (if (problem-struct-alpha problem)
@@ -875,11 +875,24 @@
                             (:v-theta
                              (setf (grid:gref voltages-vector node-number) (bond-struct-voltage-magnitude (node-struct-bond node))
                                    (grid:gref thetas-vector node-number) (bond-struct-voltage-phase (node-struct-bond node))))))
-                         ((or :load :interconnection)
-                          (incf (grid:gref voltages-vector node-number) (if (problem-struct-alpha problem)
+                         (:load
+                          (case (bond-struct-kind (node-struct-bond node))
+                            (:v=f(Q)
+                             ())
+                            (:p-q
+                             (incf (grid:gref voltages-vector node-number) (if (problem-struct-alpha problem)
                                                                                (* (grid:gref (problem-struct-alpha problem) (+ (grid:dim0 thetas-vector) node-number))
                                                                                   (grid:gref delta-voltages-vector node-number))
                                                                                (grid:gref delta-voltages-vector node-number)))
+                             (incf (grid:gref thetas-vector node-number) (if (problem-struct-alpha problem)
+                                                                             (* (grid:gref (problem-struct-alpha problem) node-number)
+                                                                                (grid:gref delta-thetas-vector node-number))
+                                                                             (grid:gref delta-thetas-vector node-number))))))
+                         (:interconnection
+                          (incf (grid:gref voltages-vector node-number) (if (problem-struct-alpha problem)
+                                                                            (* (grid:gref (problem-struct-alpha problem) (+ (grid:dim0 thetas-vector) node-number))
+                                                                               (grid:gref delta-voltages-vector node-number))
+                                                                            (grid:gref delta-voltages-vector node-number)))
                           (incf (grid:gref thetas-vector node-number) (if (problem-struct-alpha problem)
                                                                           (* (grid:gref (problem-struct-alpha problem) node-number)
                                                                              (grid:gref delta-thetas-vector node-number))
