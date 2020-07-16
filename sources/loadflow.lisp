@@ -183,18 +183,18 @@
                   sum (* (abs (grid:gref v k))
                          (abs (grid:gref v i))
                          (abs (grid:gref y k i))
-                         (cos (+ (phase (grid:gref y k i))
-                                 (- (grid:gref theta k))
-                                 (grid:gref theta i))))))
+                         (cos (- (grid:gref theta k)
+                                 (grid:gref theta i)
+                                 (phase (grid:gref y k i)))))))
              (nodal-reactive-power (k v theta y)
-               (- (loop
-                     for i from 0 below (grid:dim0 v)
-                     sum (* (abs (grid:gref v k))
-                            (abs (grid:gref v i))
-                            (abs (grid:gref y k i))
-                            (sin (+ (phase (grid:gref y k i))
-                                    (- (grid:gref theta k))
-                                    (grid:gref theta i))))))))
+               (loop
+                  for i from 0 below (grid:dim0 v)
+                  sum (* (abs (grid:gref v k))
+                         (abs (grid:gref v i))
+                         (abs (grid:gref y k i))
+                         (sin (- (grid:gref theta k)
+                                 (grid:gref theta i)
+                                 (phase (grid:gref y k i))))))))
       (with-hash-table-iterator (nodes-iterator nodes-table)
         (loop
            named nodes-loop
@@ -348,26 +348,27 @@
   (when (integerp verbose)
     (when (> verbose 5)
       (printout :message "entering calculate-jacobian().~&")))
-  (let ((jacobian-matrix nil)
+  (let ((jacobian-threads nil)
+        (jacobian-matrix nil)
         (ok? nil))
     (labels ((dp/dtheta (v theta y k h)
                (if (= k h)
-                   (* (abs (grid:gref v k))
-                      (loop
-                         with admittance = nil
-                         for i from 0 below (grid:dim0 v)
-                         when (/= i k)
-                         sum (* (abs (grid:gref v i))
-                                (abs (grid:gref y k i))
-                                (sin (+ (- (grid:gref theta k))
-                                        (grid:gref theta i)
-                                        (phase (grid:gref y k i)))))))
                    (- (* (abs (grid:gref v k))
-                         (abs (grid:gref v h))
-                         (abs (grid:gref y k h))
-                         (sin (+ (- (grid:gref theta k))
-                                 (grid:gref theta h)
-                                 (phase (grid:gref y k h))))))))
+                         (loop
+                            with admittance = nil
+                            for i from 0 below (grid:dim0 v)
+                            when (/= i k)
+                            sum (* (abs (grid:gref v i))
+                                   (abs (grid:gref y k i))
+                                   (sin (- (grid:gref theta k)
+                                           (grid:gref theta i)
+                                           (phase (grid:gref y k i))))))))
+                   (* (abs (grid:gref v k))
+                      (abs (grid:gref v h))
+                      (abs (grid:gref y k h))
+                      (sin (- (grid:gref theta k)
+                              (grid:gref theta h)
+                              (phase (grid:gref y k h)))))))
              (dq/dtheta (v theta y k h)
                (if (= k h)
                    (* (abs (grid:gref v k))
@@ -376,13 +377,13 @@
                          when (/= i k)
                          sum (* (abs (grid:gref v i))
                                 (abs (grid:gref y k i))
-                                (cos (+ (- (grid:gref theta k))
+                                (cos (- (grid:gref theta k)
                                         (grid:gref theta i)
                                         (phase (grid:gref y k i)))))))
                    (- (* (abs (grid:gref v k))
                          (abs (grid:gref v h))
                          (abs (grid:gref y k h))
-                         (cos (+ (- (grid:gref v k))
+                         (cos (- (grid:gref v k)
                                  (grid:gref v h)
                                  (phase (grid:gref y k h))))))))
              (dp/dv (v theta y k h)
@@ -392,7 +393,7 @@
                       if (/= i k)
                       sum (* (abs (grid:gref v i))
                              (abs (grid:gref y k i))
-                             (cos (+ (- (grid:gref theta k))
+                             (cos (- (grid:gref theta k)
                                      (grid:gref theta i)
                                      (phase (grid:gref y k i)))))
                       else
@@ -402,7 +403,7 @@
                              (cos (phase (grid:gref y k k)))))
                    (* (abs (grid:gref v k))
                       (abs (grid:gref y k h))
-                      (cos (+ (- (grid:gref theta k))
+                      (cos (- (grid:gref theta k)
                               (grid:gref theta h)
                               (phase (grid:gref y k h)))))))
              (dq/dv (v theta y k h)
@@ -412,7 +413,7 @@
                       if (/= i k)
                       sum (* (abs (grid:gref v i))
                              (abs (grid:gref y k i))
-                             (sin (+ (- (grid:gref theta k))
+                             (sin (- (grid:gref theta k)
                                      (grid:gref theta i)
                                      (phase (grid:gref y k i)))))
                       else
@@ -420,41 +421,77 @@
                                 (abs (grid:gref v k))
                                 (abs (grid:gref y k k))
                                 (sin (phase (grid:gref y k k))))))
-                   (- (* (abs (grid:gref v k))
-                         (abs (grid:gref y k h))
-                         (sin (+ (- (grid:gref theta k))
-                                 (grid:gref theta h)
-                                 (phase (grid:gref y k h)))))))))
+                   (* (abs (grid:gref v k))
+                      (abs (grid:gref y k h))
+                      (sin (- (grid:gref theta k)
+                              (grid:gref theta h)
+                              (phase (grid:gref y k h)))))))
+             (update-dp/dtheta-matrix (m v theta y)
+               (loop
+                  for i from 0 below (grid:dim0 m)
+                  do
+                    (loop
+                       for j from 0 below (grid:dim1 m)
+                       do
+                         (setf (grid:gref m i j) (dp/dtheta v theta y i j)))))
+             (update-dq/dtheta-matrix (m v theta y)
+               (loop
+                  for i from 0 below (grid:dim0 m)
+                  do
+                    (loop
+                       for j from 0 below (grid:dim1 m)
+                       do
+                         (setf (grid:gref m i j) (dq/dtheta v theta y i j)))))
+             (update-dq/dv-matrix (m v theta y)
+               (loop
+                  for i from 0 below (grid:dim0 m)
+                  do
+                    (loop
+                       for j from 0 below (grid:dim1 m)
+                       do
+                         (setf (grid:gref m i j) (dq/dv v theta y i j)))))
+             (update-dp/dv-matrix (m v theta y)
+               (loop
+                  for i from 0 below (grid:dim0 m)
+                  do
+                    (loop
+                       for j from 0 below (grid:dim1 m)
+                       do
+                         (setf (grid:gref m i j) (dp/dv v theta y i j))))))
+      (setq jacobian-threads (list (bt:make-thread #'(lambda ()
+                                                       (update-dp/dtheta-matrix dp/dtheta-matrix
+                                                                                (grid:copy voltages-vector)
+                                                                                (grid:copy thetas-vector)
+                                                                                (grid:copy admittances-matrix)))
+                                                   :name "dp/dtheta-thread")
+                                   (bt:make-thread #'(lambda ()
+                                                       (update-dq/dtheta-matrix dq/dtheta-matrix
+                                                                                (grid:copy voltages-vector)
+                                                                                (grid:copy thetas-vector)
+                                                                                (grid:copy admittances-matrix)))
+                                                   :name "dp/dtheta-thread")
+                                   (bt:make-thread #'(lambda ()
+                                                       (update-dp/dv-matrix dp/dv-matrix
+                                                                            (grid:copy voltages-vector)
+                                                                            (grid:copy thetas-vector)
+                                                                            (grid:copy admittances-matrix)))
+                                                   :name "dp/dv-thread")
+                                   (bt:make-thread #'(lambda ()
+                                                       (update-dq/dv-matrix dq/dv-matrix
+                                                                            (grid:copy voltages-vector)
+                                                                            (grid:copy thetas-vector)
+                                                                            (grid:copy admittances-matrix)))
+                                                   :name "dq/dv-thread")))
       (loop
-         for i from 0 below (grid:dim0 dp/dtheta-matrix)
+         named test-threads
+         when
+           (reduce #'(lambda (x y)
+                       (and x y))
+                   (loop
+                      for x in jacobian-threads
+                      collect (not (bt:thread-alive-p x))))
          do
-           (loop
-              for j from 0 below (grid:dim1 dp/dtheta-matrix)
-              do
-                (setf (grid:gref dp/dtheta-matrix i j) (dp/dtheta (grid:copy voltages-vector)
-                                                                  (grid:copy thetas-vector)
-                                                                  (grid:copy admittances-matrix) i j))))
-      (loop
-         for i from 0 below (grid:dim0 dq/dv-matrix)
-         do
-           (loop
-              for j from 0 below (grid:dim1 dq/dv-matrix)
-              do
-                (setf (grid:gref dq/dv-matrix i j) (dq/dv (grid:copy voltages-vector)
-                                                          (grid:copy thetas-vector)
-                                                          (grid:copy admittances-matrix) i j))))
-      (loop
-         for i from 0 below (grid:dim0 dp/dv-matrix)
-         do
-           (loop
-              for j from 0 below (grid:dim1 dp/dv-matrix)
-              do
-                (setf (grid:gref dp/dv-matrix i j) (dp/dv (grid:copy voltages-vector)
-                                                          (grid:copy thetas-vector)
-                                                          (grid:copy admittances-matrix) i j)
-                      (grid:gref dq/dtheta-matrix j i) (dq/dtheta (grid:copy voltages-vector)
-                                                                  (grid:copy thetas-vector)
-                                                                  (grid:copy admittances-matrix) j i))))
+           (return-from test-threads))
       (setq jacobian-matrix (grid:concatenate-grids (grid:concatenate-grids (grid:copy dp/dtheta-matrix)
                                                                             (grid:copy dp/dv-matrix)
                                                                             :axis 1)

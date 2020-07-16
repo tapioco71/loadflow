@@ -22,7 +22,7 @@
                   :solver-type :newton-raphson-polar
                   :maximum-iterations-count 20
                   :epsilon-power #c(2d3 2d3)
-                  :alpha #(1d0 1d0 2d0 2d0)
+                  :alpha #(1d0 1d0 1d0 1d0)
                   :frequency 50d0
                   :author "Angelo Rossi"
                   :date 3800422183
