@@ -1206,7 +1206,13 @@
                                                                                                                                       :verbose verbose)
                                                                                                                    (if ok?
                                                                                                                        (progn
-                                                                                                                         (setf (problem-struct-solution problem) (list (list :voltages voltages)
+                                                                                                                         (setf (problem-struct-solution problem) (list (list :powers (loop
+                                                                                                                                                                                        for i from 0 below (grid:dim0 p-vector)
+                                                                                                                                                                                        collect (make-phasor :magnitude (abs (complex (grid:gref p-vector i)
+                                                                                                                                                                                                                                      (grid:gref q-vector i)))
+                                                                                                                                                                                                             :argument (atan (grid:gref q-vector i)
+                                                                                                                                                                                                                             (grid:gref p-vector i)))))
+                                                                                                                                                                       (list :voltages voltages)
                                                                                                                                                                        (list :currents currents)
                                                                                                                                                                        (list :bond-currents bond-currents)
                                                                                                                                                                        (list :iteration-count i))

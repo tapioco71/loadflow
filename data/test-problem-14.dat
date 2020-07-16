@@ -21,7 +21,7 @@
 #s(problem-struct :name "test-problem-14"
                   :solver-type :newton-raphson-polar
                   :maximum-iterations-count 400
-                  :epsilon-power #c(10d0 10d0)
+                  :epsilon-power #c(100d0 100d0)
                   :alpha #(3.124d-1 3.124d-1 3.124d-1 3.124d-1 3.124d-1 3.124d-1 3.124d-1 3.124d-1 3.124d-1 3.124d-1 3.124d-1 3.124d-1)
                   :frequency 50d0
                   :author "Angelo Rossi"
