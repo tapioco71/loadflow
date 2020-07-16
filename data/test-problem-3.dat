@@ -32,7 +32,7 @@
                                            :kind :generation
                                            :bond #s(bond-struct :name generator-101
                                                                 :kind :v-theta
-                                                                :voltage-magnitude 236.7d3
+                                                                :voltage-magnitude 236.71d3
                                                                 :voltage-phase 0d0))
                             #s(node-struct :name node-2
                                            :kind :load
@@ -40,7 +40,7 @@
                                                                 :kind :p-q
                                                                 :active-power 300d6
                                                                 :reactive-power 100d6)
-                                           :data (:voltage-magnitude 219.4d3 :voltage-phase 0d0))
+                                           :data (:voltage-magnitude 219.39d3 :voltage-phase 0d0))
                             #s(bipole-struct :name bipole-1
                                              :kind :admittance
                                              :nodes (node-0 node-1)
@@ -51,5 +51,5 @@
                                              :model-parameters (:value #c(1.5380d0 35.412d0)))
                             #s(bipole-struct :name bipole-3
                                              :kind :admittance
-                                             :nodes (node-2 node-0)
+                                             :nodes (node-0 node-2)
                                              :model-parameters (:value #c(0d0 1d-3)))))
