@@ -209,136 +209,139 @@
     (when (> verbose 5)
       (printout :message "entering calculate-pq-residuals().~&")))
   (let ((ok? nil))
-    (labels ((nodal-active-power (k v theta y)
-               (* (abs (grid:gref v k))
-                  (loop
-                     for i from 0 below (grid:dim0 v)
-                     sum (* (abs (grid:gref v i))
-                            (abs (grid:gref y k i))
-                            (cos (- (grid:gref theta k)
-                                    (grid:gref theta i)
-                                    (phase (grid:gref y k i))))))))
-             (nodal-reactive-power (k v theta y)
-               (* (abs (grid:gref v k))
-                  (loop
-                     for i from 0 below (grid:dim0 v)
-                     sum (* (abs (grid:gref v i))
-                            (abs (grid:gref y k i))
-                            (sin (- (grid:gref theta k)
-                                    (grid:gref theta i)
-                                    (phase (grid:gref y k i)))))))))
-      (with-hash-table-iterator (nodes-iterator nodes-table)
-        (loop
-           named nodes-loop
-           initially (setq ok? t)
-           do
-             (multiple-value-bind (more? node-name node-number)
-                 (nodes-iterator)
-               (if more?
-                   (let ((node (first (select-element :predicate (where :name node-name)
-                                                      :network (problem-struct-network problem)))))
-                     (if node
-                         (case (node-struct-kind node)
-                           (:generation
-                            (case (bond-struct-kind (node-struct-bond node))
-                              (:p-v
-                               (setf (grid:gref p-vector node-number) (nodal-active-power node-number
-                                                                                          voltages-vector
-                                                                                          thetas-vector
-                                                                                          admittances-matrix)
-                                     (grid:gref q-vector node-number) (nodal-reactive-power node-number
-                                                                                            voltages-vector
-                                                                                            thetas-vector
-                                                                                            admittances-matrix)
-                                     (grid:gref delta-p-vector node-number) (- (bond-struct-active-power (node-struct-bond node))
-                                                                               (grid:gref p-vector node-number))
-                                     (grid:gref delta-q-vector node-number) 0d0))
-                              (:q-v
-                               (setf (grid:gref p-vector node-number) (nodal-active-power node-number
-                                                                                          voltages-vector
-                                                                                          thetas-vector
-                                                                                          admittances-matrix)
-                                     (grid:gref q-vector node-number) (nodal-reactive-power node-number
-                                                                                            voltages-vector
-                                                                                            thetas-vector
-                                                                                            admittances-matrix)
-                                     (grid:gref delta-p-vector node-number) 0d0
-                                     (grid:gref delta-q-vector node-number) (- (bond-struct-reactive-power (node-struct-bond node))
-                                                                               (grid:gref q-vector node-number))))
-                              (:p-q
-                               (setf (grid:gref p-vector node-number) (nodal-active-power node-number
-                                                                                          voltages-vector
-                                                                                          thetas-vector
-                                                                                          admittances-matrix)
-
-                                     (grid:gref q-vector node-number) (nodal-reactive-power node-number
-                                                                                            voltages-vector
-                                                                                            thetas-vector
-                                                                                            admittances-matrix)
-                                     (grid:gref delta-p-vector node-number) (- (bond-struct-active-power (node-struct-bond node))
-                                                                               (grid:gref p-vector node-number))
-                                     (grid:gref delta-q-vector node-number) (- (bond-struct-reactive-power (node-struct-bond node))
-                                                                               (grid:gref q-vector node-number))))
-                              (:v-theta
-                               (setf (grid:gref p-vector node-number) (nodal-active-power node-number
-                                                                                          voltages-vector
-                                                                                          thetas-vector
-                                                                                          admittances-matrix)
-                                     (grid:gref q-vector node-number) (nodal-reactive-power node-number
-                                                                                            voltages-vector
-                                                                                            thetas-vector
-                                                                                            admittances-matrix)
-                                     (grid:gref delta-p-vector node-number) 0d0
-                                     (grid:gref delta-q-vector node-number) 0d0))))
-                           (:load
-                            (case (bond-struct-kind (node-struct-bond node))
-                              (:v=f(Q)
-                                ())
-                              (:p-q
-                               (setf (grid:gref p-vector node-number) (nodal-active-power node-number
-                                                                                          voltages-vector
-                                                                                          thetas-vector
-                                                                                          admittances-matrix)
-                                     (grid:gref q-vector node-number) (nodal-reactive-power node-number
-                                                                                            voltages-vector
-                                                                                            thetas-vector
-                                                                                            admittances-matrix)
-                                     (grid:gref delta-p-vector node-number) (- (- (bond-struct-active-power (node-struct-bond node)))
-                                                                               (grid:gref p-vector node-number))
-                                     (grid:gref delta-q-vector node-number) (- (- (bond-struct-reactive-power (node-struct-bond node)))
-                                                                               (grid:gref q-vector node-number))))))
-                           (:interconnection
-                            (setf (grid:gref p-vector node-number) (nodal-active-power node-number
-                                                                                       voltages-vector
-                                                                                       thetas-vector
-                                                                                       admittances-matrix)
-                                  (grid:gref q-vector node-number) (nodal-reactive-power node-number
-                                                                                         voltages-vector
-                                                                                         thetas-vector
-                                                                                         admittances-matrix)
-                                  (grid:gref delta-p-vector node-number) (- (grid:gref p-vector node-number))
-                                  (grid:gref delta-q-vector node-number) (- (grid:gref q-vector node-number)))))
-                         (progn
-                           (setq ok? nil)
-                           (when (integerp verbose)
-                             (when (> verbose 10)
-                               (printout :error "no node named ~a in the network.~&" node-name)))
-                           (return-from nodes-loop))))
-                   (return-from nodes-loop)))))
-      (when (integerp verbose)
-        (when (> verbose 10)
-          (printout :message "P = ~a.~&" p-vector)
-          (printout :message "Q = ~a.~&" q-vector)
-          (printout :message "delta-P = ~s.~&" delta-p-vector)
-          (printout :message "delta-Q = ~s.~&" delta-q-vector)))
-      (when (integerp verbose)
-        (when (> verbose 5)
-          (printout :message "exiting calculate-pq-residuals().~%~%")))
-      (values p-vector
-              q-vector
-              delta-p-vector
-              delta-q-vector
-              ok?))))
+    (handler-case
+        (labels ((nodal-active-power (k v theta y)
+                   (* (abs (grid:gref v k))
+                      (loop
+                         for i from 0 below (grid:dim0 v)
+                         sum (* (abs (grid:gref v i))
+                                (abs (grid:gref y k i))
+                                (cos (- (grid:gref theta k)
+                                        (grid:gref theta i)
+                                        (phase (grid:gref y k i))))))))
+                 (nodal-reactive-power (k v theta y)
+                   (* (abs (grid:gref v k))
+                      (loop
+                         for i from 0 below (grid:dim0 v)
+                         sum (* (abs (grid:gref v i))
+                                (abs (grid:gref y k i))
+                                (sin (- (grid:gref theta k)
+                                        (grid:gref theta i)
+                                        (phase (grid:gref y k i)))))))))
+          (with-hash-table-iterator (nodes-iterator nodes-table)
+            (loop
+               named nodes-loop
+               initially (setq ok? t)
+               do
+                 (multiple-value-bind (more? node-name node-number)
+                     (nodes-iterator)
+                   (if more?
+                       (let ((node (first (select-element :predicate (where :name node-name)
+                                                          :network (problem-struct-network problem)))))
+                         (if node
+                             (case (node-struct-kind node)
+                               (:generation
+                                (case (bond-struct-kind (node-struct-bond node))
+                                  (:p-v
+                                   (setf (grid:gref p-vector node-number) (nodal-active-power node-number
+                                                                                              voltages-vector
+                                                                                              thetas-vector
+                                                                                              admittances-matrix)
+                                         (grid:gref q-vector node-number) (nodal-reactive-power node-number
+                                                                                                voltages-vector
+                                                                                                thetas-vector
+                                                                                                admittances-matrix)
+                                         (grid:gref delta-p-vector node-number) (- (bond-struct-active-power (node-struct-bond node))
+                                                                                   (grid:gref p-vector node-number))
+                                         (grid:gref delta-q-vector node-number) 0d0))
+                                  (:q-v
+                                   (setf (grid:gref p-vector node-number) (nodal-active-power node-number
+                                                                                              voltages-vector
+                                                                                              thetas-vector
+                                                                                              admittances-matrix)
+                                         (grid:gref q-vector node-number) (nodal-reactive-power node-number
+                                                                                                voltages-vector
+                                                                                                thetas-vector
+                                                                                                admittances-matrix)
+                                         (grid:gref delta-p-vector node-number) 0d0
+                                         (grid:gref delta-q-vector node-number) (- (bond-struct-reactive-power (node-struct-bond node))
+                                                                                   (grid:gref q-vector node-number))))
+                                  (:p-q
+                                   (setf (grid:gref p-vector node-number) (nodal-active-power node-number
+                                                                                              voltages-vector
+                                                                                              thetas-vector
+                                                                                              admittances-matrix)
+                                         (grid:gref q-vector node-number) (nodal-reactive-power node-number
+                                                                                                voltages-vector
+                                                                                                thetas-vector
+                                                                                                admittances-matrix)
+                                         (grid:gref delta-p-vector node-number) (- (bond-struct-active-power (node-struct-bond node))
+                                                                                   (grid:gref p-vector node-number))
+                                         (grid:gref delta-q-vector node-number) (- (bond-struct-reactive-power (node-struct-bond node))
+                                                                                   (grid:gref q-vector node-number))))
+                                  (:v-theta
+                                   (setf (grid:gref p-vector node-number) (nodal-active-power node-number
+                                                                                              voltages-vector
+                                                                                              thetas-vector
+                                                                                              admittances-matrix)
+                                         (grid:gref q-vector node-number) (nodal-reactive-power node-number
+                                                                                                voltages-vector
+                                                                                                thetas-vector
+                                                                                                admittances-matrix)
+                                         (grid:gref delta-p-vector node-number) 0d0
+                                         (grid:gref delta-q-vector node-number) 0d0))))
+                               (:load
+                                (case (bond-struct-kind (node-struct-bond node))
+                                  (:v=f(Q)
+                                       ())
+                                  (:p-q
+                                   (setf (grid:gref p-vector node-number) (nodal-active-power node-number
+                                                                                              voltages-vector
+                                                                                              thetas-vector
+                                                                                              admittances-matrix)
+                                         (grid:gref q-vector node-number) (nodal-reactive-power node-number
+                                                                                                voltages-vector
+                                                                                                thetas-vector
+                                                                                                admittances-matrix)
+                                         (grid:gref delta-p-vector node-number) (- (- (bond-struct-active-power (node-struct-bond node)))
+                                                                                   (grid:gref p-vector node-number))
+                                         (grid:gref delta-q-vector node-number) (- (- (bond-struct-reactive-power (node-struct-bond node)))
+                                                                                   (grid:gref q-vector node-number))))))
+                               (:interconnection
+                                (setf (grid:gref p-vector node-number) (nodal-active-power node-number
+                                                                                           voltages-vector
+                                                                                           thetas-vector
+                                                                                           admittances-matrix)
+                                      (grid:gref q-vector node-number) (nodal-reactive-power node-number
+                                                                                             voltages-vector
+                                                                                             thetas-vector
+                                                                                             admittances-matrix)
+                                      (grid:gref delta-p-vector node-number) (- (grid:gref p-vector node-number))
+                                      (grid:gref delta-q-vector node-number) (- (grid:gref q-vector node-number)))))
+                             (progn
+                               (setq ok? nil)
+                               (when (integerp verbose)
+                                 (when (> verbose 10)
+                                   (printout :error "no node named ~a in the network.~&" node-name)))
+                               (return-from nodes-loop))))
+                       (return-from nodes-loop)))))
+          (when ok?
+            (when (integerp verbose)
+              (when (> verbose 10)
+                (printout :message "P = ~a.~&" p-vector)
+                (printout :message "Q = ~a.~&" q-vector)
+                (printout :message "delta-P = ~s.~&" delta-p-vector)
+                (printout :message "delta-Q = ~s.~&" delta-q-vector))))
+          (when (integerp verbose)
+            (when (> verbose 5)
+              (printout :message "exiting calculate-pq-residuals().~%~%"))))
+      (error (e)
+        (setq ok? nil)))
+    (values p-vector
+            q-vector
+            delta-p-vector
+            delta-q-vector
+            ok?)))
 
 (defun calculate-jacobian (&rest parameters &key
                                               (dp/dtheta-matrix nil dp/dtheta-matrix-p)
@@ -852,7 +855,9 @@
                     (setq delta-thetas (gsll:matrix-product (grid:transpose (grid:copy ctheta-matrix))
                                                             (grid:subgrid x-vector (list (grid:dim0 ctheta-matrix)) (list 0)))
                           delta-voltages (gsll:matrix-product (grid:transpose (grid:copy cv-matrix))
-                                                              (grid:subgrid x-vector (list (grid:dim0 cv-matrix)) (list (grid:dim0 ctheta-matrix))))))
+                                                              (grid:subgrid x-vector (list (grid:dim0 cv-matrix)) (list (grid:dim0 ctheta-matrix)))))))
+                (progn
+                  (setq ok? nil)
                   (when (integerp verbose)
                     (when (> verbose 10)
                       (printout :error "no solution.~&")))))))

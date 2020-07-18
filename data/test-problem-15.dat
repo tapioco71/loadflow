@@ -20,8 +20,8 @@
 
 #s(problem-struct :name "test-problem-15"
                   :maximum-iterations-count 100
-;;                  :alpha #(1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3)
-;;                  :beta #(1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3)
+                  :alpha #(1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3)
+                  :beta #(1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3)
                   :epsilon-power #c(1d3 1d3)
                   :frequency 50d0
                   :author "Angelo Rossi"
@@ -139,7 +139,7 @@
                             #s(bipole-struct :name bipole-11-4
                                              :kind :impedance
                                              :nodes (node-11 node-4)
-                                             :model-parameters (:value #c(0.0813d0 0.0288d0)))
+                                             :model-parameters (:value #c(0.09813d0 0.0288d0)))
                             #s(bipole-struct :name bipole-4-12
                                              :kind :impedance
                                              :nodes (node-4 node-12)
