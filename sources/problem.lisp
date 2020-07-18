@@ -37,6 +37,7 @@
   (maximum-iterations-count 100 :type (integer 1))
   (epsilon-power nil :type (or real complex phasor-struct null))
   (alpha nil :type (or (array * (*)) grid:foreign-array null))
+  (beta nil :type (or (array * (*)) grid:foreign-array null))
   (frequency nil :type (or real null))
   (author "" :type (or string null))
   (date 0 :type (or (unsigned-byte 64) null))
@@ -53,6 +54,7 @@
                                         (maximum-iterations-count 100 maximum-iterations-count-p)
                                         (epsilon-power #c(1d-3 1d-3) epsilon-power-p)
                                         (alpha nil alpha-p)
+                                        (beta nil beta-p)
                                         (frequency 50d0 frequency-p)
                                         (author "" author-p)
                                         (date (get-universal-time) date-p)
@@ -67,6 +69,7 @@
                       maximum-iterations-count
                       epsilon-power
                       alpha
+                      beta
                       frequency
                       author
                       date
@@ -84,6 +87,8 @@
     (check-type epsilon-power (or real complex phasor-struct)))
   (when alpha-p
     (check-type alpha (or (array * (*)) grid:foreign-array null)))
+  (when beta-p
+    (check-type beta (or (array * (*)) grid:foreign-array null)))
   (when frequency-p
     (check-type frequency (or real null)))
   (when author-p
@@ -110,6 +115,9 @@
           (problem-struct-alpha object) (if alpha
                                             (grid:copy-to alpha 'grid:foreign-array 'double-float)
                                             nil)
+          (problem-struct-beta object) (if beta
+                                           (grid:copy-to beta 'grid:foreign-array 'double-float)
+                                           nil)
           (problem-struct-frequency object) frequency
           (problem-struct-author object) author
           (problem-struct-date object) date
@@ -390,9 +398,21 @@
                            (incf unknown-thetas-count)
                            (incf generation-nodes-count))
                           (:v-theta
-                           (incf generation-nodes-count))))
+                           (incf generation-nodes-count))
+                          (t
+                           (setq ok? nil)
+                           (when (integerp verbose)
+                             (when (> verbose 5)
+                               (printout :error
+                                         "bond ~a unknown kind ~a for generation node ~a.~&"
+                                         (bond-struct-name (node-struct-bond node))
+                                         (bond-struct-kind (node-struct-bond node))
+                                         (node-struct-name node))))
+                           (return-from nodes-loop))))
                        (:load
                         (case (bond-struct-kind (node-struct-bond node))
+                          (:v=f(Q)
+                           ())
                           (:p-q
                            (adjust-array temp-cv-matrix
                                          (list (1+ unknown-voltages-count) nodes-count)
@@ -404,7 +424,17 @@
                                  (aref temp-ctheta-matrix unknown-thetas-count node-number) 1d0)
                            (incf unknown-voltages-count)
                            (incf unknown-thetas-count)
-                           (incf load-nodes-count))))
+                           (incf load-nodes-count))
+                          (t
+                           (setq ok? nil)
+                           (when (integerp verbose)
+                             (when (> verbose 5)
+                               (printout :error
+                                         "bond ~a unknown kind ~a for load node ~a.~&"
+                                         (bond-struct-name (node-struct-bond node))
+                                         (bond-struct-kind (node-struct-bond node))
+                                         (node-struct-name node))))
+                           (return-from nodes-loop))))
                        (:interconnection
                         (adjust-array temp-cv-matrix
                                       (list (1+ unknown-voltages-count) nodes-count)

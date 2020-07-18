@@ -69,27 +69,51 @@
                             (:p-v ;; Q and theta unknown - |V| value is in bond-struct :voltage-magnitude and initial value for theta is in :data
                              (when (integerp verbose)
                                (when (> verbose 10)
-                                 (printout :message "applying voltage magnitude bond as initial value: ~s.~&" (node-struct-bond node))
-                                 (printout :message "applying voltage phase initial value: ~s.~&" (node-struct-data node))))
+                                 (printout :message
+                                           "node ~a (~a) applying voltage magnitude bond as initial value: ~s.~&"
+                                           node-name
+                                           node-number
+                                           (node-struct-bond node))
+                                 (printout :message
+                                           "node ~a (~a) applying voltage phase initial value: ~s.~&"
+                                           node-name
+                                           node-number
+                                           (node-struct-data node))))
                              (setf (grid:gref voltages-vector node-number) (bond-struct-voltage-magnitude (node-struct-bond node))
                                    (grid:gref thetas-vector node-number) (getf (node-struct-data node) :voltage-phase)))
                             (:q-v ;; P and theta unknown - |V| value is in bond-struct :voltage-magnitude and initial value for theta is in :data
                              (when (integerp verbose)
                                (when (> verbose 10)
-                                 (printout :message "applying voltage magnitude bond as initial value: ~s.~&" (node-struct-bond node))
-                                 (printout :message "applying voltage phase initial value: ~s.~&" (node-struct-data node))))
+                                 (printout :message
+                                           "node ~a (~a) applying voltage magnitude bond as initial value: ~s.~&"
+                                           node-name
+                                           node-number
+                                           (node-struct-bond node))
+                                 (printout :message
+                                           "node ~a (~a) applying voltage phase initial value: ~s.~&"
+                                           node-name
+                                           node-number
+                                           (node-struct-data node))))
                              (setf (grid:gref voltages-vector node-number) (bond-struct-voltage-magnitude (node-struct-bond node))
                                    (grid:gref thetas-vector node-number) (getf (node-struct-data node) :voltage-phase)))
                             (:p-q ;; |V| and theta unknown - initial values for |V| and theta are in :data
                              (when (integerp verbose)
                                (when (> verbose 10)
-                                 (printout :message "applying voltage phasor initial value: ~s.~&" (node-struct-data node))))
+                                 (printout :message
+                                           "node ~a (~a) applying voltage phasor initial value: ~s.~&"
+                                           node-name
+                                           node-number
+                                           (node-struct-data node))))
                              (setf (grid:gref voltages-vector node-number) (getf (node-struct-data node) :voltage-magnitude)
                                    (grid:gref thetas-vector node-number) (getf (node-struct-data node) :voltage-phase)))
                             (:v-theta ;; P and Q unknown - |V| and arg(V) values are in bond-struct :voltage-magnitude and :voltage-phase
                              (when (integerp verbose)
                                (when (> verbose 10)
-                                 (printout :message "applying voltage phasor bond as initial value: ~s.~&" (node-struct-bond node))))
+                                 (printout :message
+                                           "node ~a (~a) applying voltage phasor bond as initial value: ~s.~&"
+                                           node-name
+                                           node-number
+                                           (node-struct-bond node))))
                              (setf (grid:gref voltages-vector node-number) (bond-struct-voltage-magnitude (node-struct-bond node))
                                    (grid:gref thetas-vector node-number) (bond-struct-voltage-phase (node-struct-bond node))))))
                          (:load
@@ -97,7 +121,11 @@
                             (:p-q ;; |e| and theta unknown - initial values for |e| and theta are in :data
                              (when (integerp verbose)
                                (when (> verbose 10)
-                                 (printout :message "applying voltage phasor initial value: ~s.~&" (node-struct-data node))))
+                                 (printout :message
+                                           "node ~a (~a) applying voltage phasor initial value: ~s.~&"
+                                           node-name
+                                           node-number
+                                           (node-struct-data node))))
                              (setf (grid:gref voltages-vector node-number) (getf (node-struct-data node) :voltage-magnitude)
                                    (grid:gref thetas-vector node-number) (getf (node-struct-data node) :voltage-phase)))
                             (:v=f(Q)
@@ -106,7 +134,11 @@
                          (:interconnection
                           (when (integerp verbose)
                             (when (> verbose 10)
-                              (printout :message "applying voltage phasor initial value: ~s.~&" (node-struct-data node))))
+                              (printout :message
+                                        "node ~a (~a) applying voltage phasor initial value: ~s.~&"
+                                        node-name
+                                        node-number
+                                        (node-struct-data node))))
                           (setf (grid:gref voltages-vector node-number) (getf (node-struct-data node) :voltage-magnitude)
                                 (grid:gref thetas-vector node-number) (getf (node-struct-data node) :voltage-phase))))
                        (progn
@@ -176,25 +208,25 @@
   (when (integerp verbose)
     (when (> verbose 5)
       (printout :message "entering calculate-pq-residuals().~&")))
-  (let* ((ok? nil))
+  (let ((ok? nil))
     (labels ((nodal-active-power (k v theta y)
-               (loop
-                  for i from 0 below (grid:dim0 v)
-                  sum (* (abs (grid:gref v k))
-                         (abs (grid:gref v i))
-                         (abs (grid:gref y k i))
-                         (cos (- (grid:gref theta k)
-                                 (grid:gref theta i)
-                                 (phase (grid:gref y k i)))))))
+               (* (abs (grid:gref v k))
+                  (loop
+                     for i from 0 below (grid:dim0 v)
+                     sum (* (abs (grid:gref v i))
+                            (abs (grid:gref y k i))
+                            (cos (- (grid:gref theta k)
+                                    (grid:gref theta i)
+                                    (phase (grid:gref y k i))))))))
              (nodal-reactive-power (k v theta y)
-               (loop
-                  for i from 0 below (grid:dim0 v)
-                  sum (* (abs (grid:gref v k))
-                         (abs (grid:gref v i))
-                         (abs (grid:gref y k i))
-                         (sin (- (grid:gref theta k)
-                                 (grid:gref theta i)
-                                 (phase (grid:gref y k i))))))))
+               (* (abs (grid:gref v k))
+                  (loop
+                     for i from 0 below (grid:dim0 v)
+                     sum (* (abs (grid:gref v i))
+                            (abs (grid:gref y k i))
+                            (sin (- (grid:gref theta k)
+                                    (grid:gref theta i)
+                                    (phase (grid:gref y k i)))))))))
       (with-hash-table-iterator (nodes-iterator nodes-table)
         (loop
            named nodes-loop
@@ -238,6 +270,7 @@
                                                                                           voltages-vector
                                                                                           thetas-vector
                                                                                           admittances-matrix)
+
                                      (grid:gref q-vector node-number) (nodal-reactive-power node-number
                                                                                             voltages-vector
                                                                                             thetas-vector
@@ -349,6 +382,7 @@
     (when (> verbose 5)
       (printout :message "entering calculate-jacobian().~&")))
   (let ((jacobian-threads nil)
+        (jacobian-locks nil)
         (jacobian-matrix nil)
         (ok? nil))
     (labels ((dp/dtheta (v theta y k h)
@@ -458,40 +492,43 @@
                        for j from 0 below (grid:dim1 m)
                        do
                          (setf (grid:gref m i j) (dp/dv v theta y i j))))))
-      (setq jacobian-threads (list (bt:make-thread #'(lambda ()
-                                                       (update-dp/dtheta-matrix dp/dtheta-matrix
-                                                                                (grid:copy voltages-vector)
-                                                                                (grid:copy thetas-vector)
-                                                                                (grid:copy admittances-matrix)))
-                                                   :name "dp/dtheta-thread")
+      (setq jacobian-locks (list (bt:make-lock (symbol-name (gensym "update-dp/dtheta-lock-")))
+                                 (bt:make-lock (symbol-name (gensym "update-dq/dtheta-lock-")))
+                                 (bt:make-lock (symbol-name (gensym "update-dp/dv-lock-")))
+                                 (bt:make-lock (symbol-name (gensym "update-dq/dv-lock-"))))
+            jacobian-threads (list (bt:make-thread #'(lambda ()
+                                                       (bt:with-lock-held ((first jacobian-locks))
+                                                         (update-dp/dtheta-matrix dp/dtheta-matrix
+                                                                                  (grid:copy voltages-vector)
+                                                                                  (grid:copy thetas-vector)
+                                                                                  (grid:copy admittances-matrix))))
+                                                   :name (symbol-name (gensym "dp/dtheta-thread-")))
                                    (bt:make-thread #'(lambda ()
-                                                       (update-dq/dtheta-matrix dq/dtheta-matrix
-                                                                                (grid:copy voltages-vector)
-                                                                                (grid:copy thetas-vector)
-                                                                                (grid:copy admittances-matrix)))
-                                                   :name "dp/dtheta-thread")
+                                                       (bt:with-lock-held ((second jacobian-locks))
+                                                         (update-dq/dtheta-matrix dq/dtheta-matrix
+                                                                                  (grid:copy voltages-vector)
+                                                                                  (grid:copy thetas-vector)
+                                                                                  (grid:copy admittances-matrix))))
+                                                   :name (symbol-name (gensym "dp/dtheta-thread-")))
                                    (bt:make-thread #'(lambda ()
-                                                       (update-dp/dv-matrix dp/dv-matrix
-                                                                            (grid:copy voltages-vector)
-                                                                            (grid:copy thetas-vector)
-                                                                            (grid:copy admittances-matrix)))
-                                                   :name "dp/dv-thread")
+                                                       (bt:with-lock-held ((third jacobian-locks))
+                                                         (update-dp/dv-matrix dp/dv-matrix
+                                                                              (grid:copy voltages-vector)
+                                                                              (grid:copy thetas-vector)
+                                                                              (grid:copy admittances-matrix))))
+                                                   :name (symbol-name (gensym "dp/dv-thread-")))
                                    (bt:make-thread #'(lambda ()
-                                                       (update-dq/dv-matrix dq/dv-matrix
-                                                                            (grid:copy voltages-vector)
-                                                                            (grid:copy thetas-vector)
-                                                                            (grid:copy admittances-matrix)))
-                                                   :name "dq/dv-thread")))
+                                                       (bt:with-lock-held ((fourth jacobian-locks))
+                                                         (update-dq/dv-matrix dq/dv-matrix
+                                                                              (grid:copy voltages-vector)
+                                                                              (grid:copy thetas-vector)
+                                                                              (grid:copy admittances-matrix))))
+                                                   :name (symbol-name (gensym "dq/dv-thread-")))))
       (loop
-         named test-threads
-         when
-           (reduce #'(lambda (x y)
-                       (and x y))
-                   (loop
-                      for x in jacobian-threads
-                      collect (not (bt:thread-alive-p x))))
+         for lock in jacobian-locks
          do
-           (return-from test-threads))
+           (bt:acquire-lock lock)
+           (bt:release-lock lock))
       (setq jacobian-matrix (grid:concatenate-grids (grid:concatenate-grids (grid:copy dp/dtheta-matrix)
                                                                             (grid:copy dp/dv-matrix)
                                                                             :axis 1)
@@ -761,36 +798,65 @@
       (printout :message "entering solve-system().~&")))
   (let* ((order (grid:dim0 jacobian-matrix))
          (x-vector nil)
-         (y-vector (grid:concatenate-grids (gsll:matrix-product ctheta-matrix (grid:copy delta-p-vector))
-                                           (gsll:matrix-product cv-matrix (grid:copy delta-q-vector))
+         (y-vector (grid:concatenate-grids (gsll:matrix-product (grid:copy ctheta-matrix)
+                                                                (grid:copy delta-p-vector))
+                                           (gsll:matrix-product (grid:copy cv-matrix)
+                                                                (grid:copy delta-q-vector))
                                            :axis 0))
          (delta-thetas nil)
          (delta-voltages nil)
          (ok? nil))
     (when (integerp verbose)
       (when (> verbose 10)
-        (printout :message "y = ~s, dim(s) = ~s.~&" y-vector (grid:dimensions y-vector))))
+        (printout :message
+                  "y = ~s, dim(s) = ~s.~&"
+                  y-vector
+                  (grid:dimensions y-vector))))
     (handler-case
         (multiple-value-bind (lu-matrix permutation signum)
             (gsll:lu-decomposition (grid:copy jacobian-matrix))
           (declare (ignore signum))
-          (let ((initial-solution (gsll:lu-solve lu-matrix (grid:copy y-vector) permutation t)))
-            (setq x-vector (gsll:lu-refine jacobian-matrix lu-matrix permutation y-vector initial-solution))
+          (let ((initial-solution (gsll:lu-solve lu-matrix
+                                                 (grid:copy y-vector)
+                                                 permutation
+                                                 t)))
+            (setq x-vector (gsll:lu-refine (grid:copy jacobian-matrix)
+                                           lu-matrix permutation
+                                           (grid:copy y-vector)
+                                           initial-solution))
             (if x-vector
                 (progn
-                  (setq ok? t)
+                  (loop
+                     named solution-check-loop
+                     finally (setq ok? t)
+                     for i from 0 below (grid:dim0 x-vector)
+                     when (gsl:nanp (grid:gref x-vector i))
+                     do
+                       (when (integerp verbose)
+                         (when (> verbose 10)
+                           (printout :error
+                                     "Solution element is not a number x(~a)!~&"
+                                     i)))
+                       (setq ok? nil)
+                       (return-from solution-check-loop))
+                  (when ok?
+                    (when (integerp verbose)
+                      (when (> verbose 10)
+                        (printout :message
+                                  "x = ~s, dim(s) = ~s.~&"
+                                  x-vector
+                                  (grid:dimensions x-vector))
+                        (printout :message
+                                  "permutation = ~s.~&"
+                                  permutation)))
+                    (setq delta-thetas (gsll:matrix-product (grid:transpose (grid:copy ctheta-matrix))
+                                                            (grid:subgrid x-vector (list (grid:dim0 ctheta-matrix)) (list 0)))
+                          delta-voltages (gsll:matrix-product (grid:transpose (grid:copy cv-matrix))
+                                                              (grid:subgrid x-vector (list (grid:dim0 cv-matrix)) (list (grid:dim0 ctheta-matrix))))))
                   (when (integerp verbose)
                     (when (> verbose 10)
-                      (printout :message "x = ~s, dim(s) = ~s.~&" x-vector (grid:dimensions x-vector))
-                      (printout :message "permutation = ~s.~&" permutation)))
-                  (setq delta-thetas (gsll:matrix-product (grid:transpose (grid:copy ctheta-matrix))
-                                                          (grid:subgrid x-vector (list (grid:dim0 ctheta-matrix)) (list 0)))
-                        delta-voltages (gsll:matrix-product (grid:transpose (grid:copy cv-matrix))
-                                                            (grid:subgrid x-vector (list (grid:dim0 cv-matrix)) (list (grid:dim0 ctheta-matrix))))))
-                (when (integerp verbose)
-                  (when (> verbose 10)
-                    (printout :error "no solution.~&"))))))
-      (error ()
+                      (printout :error "no solution.~&")))))))
+      (error (e)
         (setq ok? nil)))
     (when (integerp verbose)
       (when (> verbose 10)
@@ -839,7 +905,10 @@
     (check-type verbose (or integer null)))
   (when (problem-struct-alpha problem)
     (assert (= (grid:dim0 (problem-struct-alpha problem))
-               (+ (grid:dim0 thetas-vector) (grid:dim0 voltages-vector)))))
+               (grid:dim0 thetas-vector))))
+  (when (problem-struct-beta problem)
+    (assert (= (grid:dim0 (problem-struct-beta problem))
+               (grid:dim0 voltages-vector))))
   (when (integerp verbose)
     (when (> verbose 5)
       (printout :message "entering update-solution().~&")))
@@ -858,8 +927,8 @@
                          (:generation
                           (case (bond-struct-kind (node-struct-bond node))
                             (:p-q
-                             (incf (grid:gref voltages-vector node-number) (if (problem-struct-alpha problem)
-                                                                               (* (grid:gref (problem-struct-alpha problem) (+ (grid:dim0 delta-thetas-vector) node-number))
+                             (incf (grid:gref voltages-vector node-number) (if (problem-struct-beta problem)
+                                                                               (* (grid:gref (problem-struct-beta problem) node-number)
                                                                                   (grid:gref delta-voltages-vector node-number))
                                                                                (grid:gref delta-voltages-vector node-number)))
                              (incf (grid:gref thetas-vector node-number) (if (problem-struct-alpha problem)
@@ -880,8 +949,8 @@
                             (:v=f(Q)
                              ())
                             (:p-q
-                             (incf (grid:gref voltages-vector node-number) (if (problem-struct-alpha problem)
-                                                                               (* (grid:gref (problem-struct-alpha problem) (+ (grid:dim0 thetas-vector) node-number))
+                             (incf (grid:gref voltages-vector node-number) (if (problem-struct-beta problem)
+                                                                               (* (grid:gref (problem-struct-beta problem) node-number)
                                                                                   (grid:gref delta-voltages-vector node-number))
                                                                                (grid:gref delta-voltages-vector node-number)))
                              (incf (grid:gref thetas-vector node-number) (if (problem-struct-alpha problem)
@@ -889,8 +958,8 @@
                                                                                 (grid:gref delta-thetas-vector node-number))
                                                                              (grid:gref delta-thetas-vector node-number))))))
                          (:interconnection
-                          (incf (grid:gref voltages-vector node-number) (if (problem-struct-alpha problem)
-                                                                            (* (grid:gref (problem-struct-alpha problem) (+ (grid:dim0 thetas-vector) node-number))
+                          (incf (grid:gref voltages-vector node-number) (if (problem-struct-beta problem)
+                                                                            (* (grid:gref (problem-struct-beta problem) node-number)
                                                                                (grid:gref delta-voltages-vector node-number))
                                                                             (grid:gref delta-voltages-vector node-number)))
                           (incf (grid:gref thetas-vector node-number) (if (problem-struct-alpha problem)
@@ -1147,7 +1216,7 @@
                                                                                      for i from 1 upto (problem-struct-maximum-iterations-count problem)
                                                                                      do
                                                                                        (when (integerp verbose)
-                                                                                         (when (> verbose 10)
+                                                                                         (when (> verbose 5)
                                                                                            (printout :message "iteration #~a~%~%" i)))
                                                                                        (multiple-value-bind (jacobian-matrix ok?)
                                                                                            (calculate-jacobian :dp/dtheta-matrix dp/dtheta-matrix
