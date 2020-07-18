@@ -385,7 +385,6 @@
     (when (> verbose 5)
       (printout :message "entering calculate-jacobian().~&")))
   (let ((jacobian-threads nil)
-        (jacobian-locks nil)
         (jacobian-matrix nil)
         (ok? nil))
     (labels ((dp/dtheta (v theta y k h)
@@ -495,43 +494,40 @@
                        for j from 0 below (grid:dim1 m)
                        do
                          (setf (grid:gref m i j) (dp/dv v theta y i j))))))
-      (setq jacobian-locks (list (bt:make-lock (symbol-name (gensym "update-dp/dtheta-lock-")))
-                                 (bt:make-lock (symbol-name (gensym "update-dq/dtheta-lock-")))
-                                 (bt:make-lock (symbol-name (gensym "update-dp/dv-lock-")))
-                                 (bt:make-lock (symbol-name (gensym "update-dq/dv-lock-"))))
-            jacobian-threads (list (bt:make-thread #'(lambda ()
-                                                       (bt:with-lock-held ((first jacobian-locks))
-                                                         (update-dp/dtheta-matrix dp/dtheta-matrix
-                                                                                  (grid:copy voltages-vector)
-                                                                                  (grid:copy thetas-vector)
-                                                                                  (grid:copy admittances-matrix))))
+      (setq jacobian-threads (list (bt:make-thread #'(lambda ()
+                                                       (update-dp/dtheta-matrix dp/dtheta-matrix
+                                                                                (grid:copy voltages-vector)
+                                                                                (grid:copy thetas-vector)
+                                                                                (grid:copy admittances-matrix)))
                                                    :name (symbol-name (gensym "dp/dtheta-thread-")))
                                    (bt:make-thread #'(lambda ()
-                                                       (bt:with-lock-held ((second jacobian-locks))
-                                                         (update-dq/dtheta-matrix dq/dtheta-matrix
-                                                                                  (grid:copy voltages-vector)
-                                                                                  (grid:copy thetas-vector)
-                                                                                  (grid:copy admittances-matrix))))
+                                                       (update-dq/dtheta-matrix dq/dtheta-matrix
+                                                                                (grid:copy voltages-vector)
+                                                                                (grid:copy thetas-vector)
+                                                                                (grid:copy admittances-matrix)))
                                                    :name (symbol-name (gensym "dp/dtheta-thread-")))
                                    (bt:make-thread #'(lambda ()
-                                                       (bt:with-lock-held ((third jacobian-locks))
-                                                         (update-dp/dv-matrix dp/dv-matrix
-                                                                              (grid:copy voltages-vector)
-                                                                              (grid:copy thetas-vector)
-                                                                              (grid:copy admittances-matrix))))
+                                                       (update-dp/dv-matrix dp/dv-matrix
+                                                                            (grid:copy voltages-vector)
+                                                                            (grid:copy thetas-vector)
+                                                                            (grid:copy admittances-matrix)))
                                                    :name (symbol-name (gensym "dp/dv-thread-")))
                                    (bt:make-thread #'(lambda ()
-                                                       (bt:with-lock-held ((fourth jacobian-locks))
-                                                         (update-dq/dv-matrix dq/dv-matrix
-                                                                              (grid:copy voltages-vector)
-                                                                              (grid:copy thetas-vector)
-                                                                              (grid:copy admittances-matrix))))
+                                                       (update-dq/dv-matrix dq/dv-matrix
+                                                                            (grid:copy voltages-vector)
+                                                                            (grid:copy thetas-vector)
+                                                                            (grid:copy admittances-matrix)))
                                                    :name (symbol-name (gensym "dq/dv-thread-")))))
       (loop
-         for lock in jacobian-locks
+         for thread in jacobian-threads
          do
-           (bt:acquire-lock lock)
-           (bt:release-lock lock))
+           (loop
+              while (bt:thread-alive-p thread))
+           (when (integerp verbose)
+             (when (> verbose 10)
+               (printout :message
+                         "thread ~s finished.~&"
+                         (bt:thread-name thread)))))
       (setq jacobian-matrix (grid:concatenate-grids (grid:concatenate-grids (grid:copy dp/dtheta-matrix)
                                                                             (grid:copy dp/dv-matrix)
                                                                             :axis 1)
@@ -556,8 +552,7 @@
       (when (integerp verbose)
         (when (> verbose 5)
           (printout :message "exiting calculate-jacobian().~%~%")))
-      (values jacobian-matrix
-              ok?))))
+      (values jacobian-matrix ok?))))
 
 (defun calculate-currents (&rest parameters &key
                                               (problem nil problem-p)
