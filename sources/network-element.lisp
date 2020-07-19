@@ -53,18 +53,18 @@
 
 (defun select-element (&rest parameters &key
                                           (predicate nil predicate-p)
-                                          (network nil network-p))
+                                          (elements nil elements-p))
   "Apply the predicate function to each of the network elements and return a
    list of them to whom predicate it is true."
   (declare (ignorable parameters
                       predicate
-                      network))
+                      elements))
   (when predicate-p
     (check-type predicate function))
-  (when network-p
-    (check-type network list))
+  (when elements-p
+    (check-type elements list))
   (remove-if-not predicate
-                 network))
+                 elements))
 
 (defun where (&rest parameters &key
                                  (name nil name-p)

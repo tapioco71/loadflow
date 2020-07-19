@@ -39,6 +39,7 @@
   (alpha nil :type (or (array * (*)) grid:foreign-array null))
   (beta nil :type (or (array * (*)) grid:foreign-array null))
   (frequency nil :type (or real null))
+  (threaded nil :type t)
   (author "" :type (or string null))
   (date 0 :type (or (unsigned-byte 64) null))
   (date-modified 0 :type (or (unsigned-byte 64) null))
@@ -56,6 +57,7 @@
                                         (alpha nil alpha-p)
                                         (beta nil beta-p)
                                         (frequency 50d0 frequency-p)
+                                        (threaded nil threaded-p)
                                         (author "" author-p)
                                         (date (get-universal-time) date-p)
                                         (date-modified (get-universal-time) date-modified-p)
@@ -71,6 +73,7 @@
                       alpha
                       beta
                       frequency
+                      threaded
                       author
                       date
                       date-modified
@@ -119,6 +122,7 @@
                                            (grid:copy-to beta 'grid:foreign-array 'double-float)
                                            nil)
           (problem-struct-frequency object) frequency
+          (problem-struct-threaded object) threaded
           (problem-struct-author object) author
           (problem-struct-date object) date
           (problem-struct-date-modified object) date-modified
@@ -126,6 +130,18 @@
           (problem-struct-solution object) solution
           (problem-struct-data object) data)
     object))
+
+;; Methods.
+
+(defmethod extract-nodes ((object problem-struct))
+  (remove-if-not #'(lambda (x)
+                     (typep x 'node-struct))
+                 (problem-struct-network object)))
+
+(defmethod extract-bipoles ((object problem-struct))
+  (remove-if-not #'(lambda (x)
+                     (typep x 'bipole-struct))
+                 (problem-struct-network object)))
 
 ;; Other functions related to the problem struct.
 
@@ -188,6 +204,20 @@
     (values problem
             ok?)))
 
+(defun count-elements (&rest parameters &key
+                                          (problem nil problem-p)
+                                          (typename nil typename-p))
+  (declare (ignorable parameters
+                      problem
+                      typename))
+  (when problem-p
+    (check-type problem problem-struct))
+  (when typename-p
+    (assert (member typename '(node-struct bipole-struct) :test #'eql)))
+  (count-if #'(lambda (x)
+                (typep x typename))
+            (problem-struct-network problem)))
+
 (defun setup-problem (&rest parameters &key
                                          (problem nil problem-p)
                                          (verbose nil verbose-p))
@@ -202,9 +232,7 @@
   (when (and (numberp verbose)
              (> verbose 5))
     (printout :message "entering setup-problem().~&"))
-  (let ((nodes-table (make-hash-table :test #'equalp))
-        (elements-table (make-hash-table :test #'equalp))
-        (return-value nil)
+  (let ((return-value nil)
         (ok? nil))
     (loop
        named state-machine-loop
@@ -228,13 +256,13 @@
                        (when (and verbose-p
                                   (> verbose 10))
                          (printout :message "adding node ~a of type ~a as number ~a.~&" (node-struct-name element) (node-struct-kind element) nodes-count))
-                       (setf (gethash (node-struct-name element) nodes-table) nodes-count)
+                       (setf (node-struct-tag element) nodes-count)
                        (incf nodes-count))
                       (:reference
                        (when (and verbose-p
                                   (> verbose 10))
                          (printout :message "adding node ~a as network reference.~&" (node-struct-name element)))
-                       (setf (gethash (node-struct-name element) nodes-table) -1)
+                       (setf (node-struct-tag element) nil)
                        (setq state 'elements-check))
                       (t
                        (setq state 'error-handling)
@@ -262,20 +290,14 @@
                     (if (= (length (bipole-struct-nodes element)) 2)
                         (loop
                            for node-name in (bipole-struct-nodes element)
-                           with nodes-numbers = ()
-                           finally (setf (gethash (bipole-struct-name element) elements-table) nodes-numbers)
                            do
-                             (multiple-value-bind (node-number valid?)
-                                 (gethash node-name nodes-table)
-                               (if valid?
-                                   (when (>= node-number 0)
-                                     (push node-number nodes-numbers))
-                                   (progn
-                                     (setq state 'error-handling)
-                                     (when (and (numberp verbose)
-                                                (> verbose 10))
-                                       (printout :error "in bipole ~a no node named ~a in the network.~&" (bipole-struct-name element) node-name))
-                                     (return-from elements-check-loop)))))
+                             (unless (first (select-element :predicate (where :name node-name)
+                                                            :elements (problem-struct-network problem)))
+                               (setq state 'error-handling)
+                               (when (integerp verbose)
+                                 (when (> verbose 10)
+                                   (printout :error "in bipole ~a no node named ~a in the network.~&" (bipole-struct-name element) node-name)))
+                               (return-from elements-check-loop)))
                         (progn
                           (setq state 'error-handling)
                           (when (and (numberp verbose)
@@ -315,139 +337,111 @@
     (when (and (numberp verbose)
                (> verbose 10))
       (printout :message "exiting setup-problem().~%~%"))
-    (values nodes-table
-            elements-table
-            ok?)))
+    ok?))
 
 (defun create-connection-matrices (&rest parameters &key
                                                       (problem nil problem-p)
-                                                      (nodes-table nil nodes-table-p)
-                                                      (elements-table nil elements-table-p)
                                                       (verbose nil verbose-p))
   "The connection matrix take in account the reduced unknown matrix which is
    used as unknown in the solving system Delta A = J X."
   (declare (ignorable parameters
                       problem
-                      nodes-table
-                      elements-table
                       verbose))
   (when problem-p
     (check-type problem problem-struct))
-  (when nodes-table-p
-    (check-type nodes-table hash-table))
-  (when elements-table-p
-    (check-type elements-table hash-table))
   (when verbose-p
     (check-type verbose (or integer null)))
   (when (and verbose-p
              (> verbose 5))
     (printout :message "entering create-connection-matrices().~&"))
-  (let* ((nodes-count (1- (hash-table-count nodes-table)))
+  (let* ((nodes-count (1- (count-elements :problem problem
+                                          :typename 'node-struct)))
          (temp-cv-matrix (make-array (list 0 0) :element-type 'double-float :initial-element 0d0 :adjustable t))
          (temp-ctheta-matrix (make-array (list 0 0) :element-type 'double-float :initial-element 0d0 :adjustable t))
          (ok? nil))
     (when (> nodes-count 0)
-      (with-hash-table-iterator (nodes-table-iterator nodes-table)
-        (loop
-           named nodes-loop
-           initially (setq ok? t)
-           with node = nil
-           with generation-nodes-count = 0
-           with load-nodes-count = 0
-           with unknown-voltages-count = 0
-           with unknown-thetas-count = 0
-           finally (unless (= (+ (* 2 load-nodes-count)
-                                 generation-nodes-count)
-                              (+ unknown-thetas-count
-                                 unknown-voltages-count))
-                     (when (and verbose-p
-                                (> verbose 10))
-                       (printout :error
-                                 "system equations vs unknown is not consistent (~a /= ~a).~&"
-                                 (+ (* 2 load-nodes-count)
-                                    generation-nodes-count)
-                                 (+ unknown-thetas-count
-                                    unknown-voltages-count)))
-                     (setq ok? nil))
-           do
-             (multiple-value-bind (more? node-name node-number)
-                 (nodes-table-iterator)
-               (if more?
-                   (progn
-                     (setq node (first (select-element :predicate (where :name node-name)
-                                                       :network (problem-struct-network problem))))
-                     (case (node-struct-kind node)
-                       (:generation
-                        (case (bond-struct-kind (node-struct-bond node))
-                          ((or :p-v :q-v)
-                           (adjust-array temp-ctheta-matrix
-                                         (list (1+ unknown-thetas-count) nodes-count)
-                                         :element-type 'double-float)
-                           (setf (aref temp-ctheta-matrix unknown-thetas-count node-number) 1d0)
-                           (incf unknown-thetas-count))
-                          (:p-q
-                           (adjust-array temp-cv-matrix
-                                         (list (1+ unknown-voltages-count) nodes-count)
-                                         :element-type 'double-float)
-                           (adjust-array temp-ctheta-matrix
-                                         (list (1+ unknown-thetas-count) nodes-count)
-                                         :element-type 'double-float)
-                           (setf (aref temp-cv-matrix unknown-voltages-count node-number) 1d0
-                                 (aref temp-ctheta-matrix unknown-thetas-count node-number) 1d0)
-                           (incf unknown-voltages-count)
-                           (incf unknown-thetas-count)
-                           (incf generation-nodes-count))
-                          (:v-theta
-                           (incf generation-nodes-count))
-                          (t
-                           (setq ok? nil)
-                           (when (integerp verbose)
-                             (when (> verbose 5)
-                               (printout :error
-                                         "bond ~a unknown kind ~a for generation node ~a.~&"
-                                         (bond-struct-name (node-struct-bond node))
-                                         (bond-struct-kind (node-struct-bond node))
-                                         (node-struct-name node))))
-                           (return-from nodes-loop))))
-                       (:load
-                        (case (bond-struct-kind (node-struct-bond node))
-                          (:v=f(Q)
-                           ())
-                          (:p-q
-                           (adjust-array temp-cv-matrix
-                                         (list (1+ unknown-voltages-count) nodes-count)
-                                         :element-type 'double-float)
-                           (adjust-array temp-ctheta-matrix
-                                         (list (1+ unknown-thetas-count) nodes-count)
-                                         :element-type 'double-float)
-                           (setf (aref temp-cv-matrix unknown-voltages-count node-number) 1d0
-                                 (aref temp-ctheta-matrix unknown-thetas-count node-number) 1d0)
-                           (incf unknown-voltages-count)
-                           (incf unknown-thetas-count)
-                           (incf load-nodes-count))
-                          (t
-                           (setq ok? nil)
-                           (when (integerp verbose)
-                             (when (> verbose 5)
-                               (printout :error
-                                         "bond ~a unknown kind ~a for load node ~a.~&"
-                                         (bond-struct-name (node-struct-bond node))
-                                         (bond-struct-kind (node-struct-bond node))
-                                         (node-struct-name node))))
-                           (return-from nodes-loop))))
-                       (:interconnection
-                        (adjust-array temp-cv-matrix
-                                      (list (1+ unknown-voltages-count) nodes-count)
-                                      :element-type 'double-float)
-                        (adjust-array temp-ctheta-matrix
-                                      (list (1+ unknown-thetas-count) nodes-count)
-                                      :element-type 'double-float)
-                        (setf (aref temp-cv-matrix unknown-voltages-count node-number) 1d0
-                              (aref temp-ctheta-matrix unknown-thetas-count node-number) 1d0)
-                        (incf unknown-voltages-count)
-                        (incf unknown-thetas-count)
-                        (incf load-nodes-count))))
-                   (return-from nodes-loop)))))
+      (loop
+         named nodes-loop
+         initially (setq ok? t)
+         with generation-nodes-count = 0
+         with load-nodes-count = 0
+         with unknown-voltages-count = 0
+         with unknown-thetas-count = 0
+         for node in (remove-if-not #'(lambda (x)
+                                        (typep x 'node-struct))
+                                    (problem-struct-network problem))
+         do
+           (case (node-struct-kind node)
+             (:generation
+              (case (bond-struct-kind (node-struct-bond node))
+                ((or :p-v :q-v)
+                 (adjust-array temp-ctheta-matrix
+                               (list (1+ unknown-thetas-count) nodes-count)
+                               :element-type 'double-float)
+                 (setf (aref temp-ctheta-matrix unknown-thetas-count (node-struct-tag node)) 1d0)
+                 (incf unknown-thetas-count))
+                (:p-q
+                 (adjust-array temp-cv-matrix
+                               (list (1+ unknown-voltages-count) nodes-count)
+                               :element-type 'double-float)
+                 (adjust-array temp-ctheta-matrix
+                               (list (1+ unknown-thetas-count) nodes-count)
+                               :element-type 'double-float)
+                 (setf (aref temp-cv-matrix unknown-voltages-count (node-struct-tag node)) 1d0
+                       (aref temp-ctheta-matrix unknown-thetas-count (node-struct-tag node)) 1d0)
+                 (incf unknown-voltages-count)
+                 (incf unknown-thetas-count)
+                 (incf generation-nodes-count))
+                (:v-theta
+                 (incf generation-nodes-count))
+                (t
+                 (setq ok? nil)
+                 (when (integerp verbose)
+                   (when (> verbose 5)
+                     (printout :error
+                               "bond ~a unknown kind ~a for generation node ~a.~&"
+                               (bond-struct-name (node-struct-bond node))
+                               (bond-struct-kind (node-struct-bond node))
+                               (node-struct-name node))))
+                 (return-from nodes-loop))))
+             (:load
+              (case (bond-struct-kind (node-struct-bond node))
+                (:v=f(Q)
+                     ())
+                (:p-q
+                 (adjust-array temp-cv-matrix
+                               (list (1+ unknown-voltages-count) nodes-count)
+                               :element-type 'double-float)
+                 (adjust-array temp-ctheta-matrix
+                               (list (1+ unknown-thetas-count) nodes-count)
+                               :element-type 'double-float)
+                 (setf (aref temp-cv-matrix unknown-voltages-count (node-struct-tag node)) 1d0
+                       (aref temp-ctheta-matrix unknown-thetas-count (node-struct-tag node)) 1d0)
+                 (incf unknown-voltages-count)
+                 (incf unknown-thetas-count)
+                 (incf load-nodes-count))
+                (t
+                 (setq ok? nil)
+                 (when (integerp verbose)
+                   (when (> verbose 5)
+                     (printout :error
+                               "bond ~a unknown kind ~a for load node ~a.~&"
+                               (bond-struct-name (node-struct-bond node))
+                               (bond-struct-kind (node-struct-bond node))
+                               (node-struct-name node))))
+                 (return-from nodes-loop))))
+             (:interconnection
+              (adjust-array temp-cv-matrix
+                            (list (1+ unknown-voltages-count) nodes-count)
+                            :element-type 'double-float)
+              (adjust-array temp-ctheta-matrix
+                            (list (1+ unknown-thetas-count) nodes-count)
+                            :element-type 'double-float)
+              (setf (aref temp-cv-matrix unknown-voltages-count (node-struct-tag node)) 1d0
+                    (aref temp-ctheta-matrix unknown-thetas-count (node-struct-tag node)) 1d0)
+              (incf unknown-voltages-count)
+              (incf unknown-thetas-count)
+              (incf load-nodes-count))))
       (setq cv-matrix (grid:copy-to temp-cv-matrix 'grid:foreign-array)
             ctheta-matrix (grid:copy-to temp-ctheta-matrix 'grid:foreign-array))
       (when (and verbose-p
@@ -463,23 +457,21 @@
 
 (defun create-vectors (&rest parameters &key
                                           (problem nil problem-p)
-                                          (nodes-table nil nodes-table-p)
                                           (verbose nil verbose-p))
   "Create new vectors from nodes count."
   (declare (ignorable parameters
                       problem
-                      nodes-table
                       verbose))
   (when problem-p
     (check-type problem problem-struct))
-  (when nodes-table-p
-    (check-type nodes-table hash-table))
   (when verbose-p
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
       (printout :message "entering create-vectors().~&")))
-  (let ((order (1- (hash-table-count nodes-table)))
+  (let ((order (1- (count-if #'(lambda (x)
+                                 (typep x 'node-struct))
+                             (problem-struct-network problem))))
         (voltages-vector nil)
         (thetas-vector nil)
         (p-vector nil)
@@ -530,220 +522,195 @@
 
 (defun create-admittances-matrix (&rest parameters &key
                                                      (problem nil problem-p)
-                                                     (nodes-table nil nodes-table-p)
-                                                     (elements-table nil elements-table-p)
                                                      (verbose nil verbose-p))
   "Create the admittance matrix from nodes and elements of the network."
   (declare (ignorable parameters
                       problem
-                      nodes-table
-                      elements-table
                       verbose))
   (when problem-p
     (check-type problem problem-struct))
-  (when nodes-table-p
-    (check-type nodes-table hash-table))
-  (when elements-table-p
-    (check-type elements-table hash-table))
   (when verbose-p
     (check-type verbose (or integer null)))
   (when (and verbose-p
              (> verbose 5))
     (printout :message "entering create admittances matrix().~&"))
-  (let* ((order (1- (hash-table-count nodes-table)))
+  (let* ((order (1- (count-elements :problem problem
+                                    :typename 'node-struct)))
          (admittances-matrix (grid:make-foreign-array '(complex double-float)
                                                       :dimensions (list order order)
                                                       :initial-element #c(0d0 0d0)))
+         (nodes (remove-if-not #'(lambda (x)
+                                   (typep x 'node-struct))
+                               (problem-struct-network problem)))
+         (bipoles (remove-if-not #'(lambda (x)
+                                     (typep x 'bipole-struct))
+                                 (problem-struct-network problem)))
          (ok? nil))
-    (with-hash-table-iterator (iterator elements-table)
-      (loop
-         initially (setq ok? t)
-         with element = nil
-         with value = nil
-         named main-loop
-         do
-           (multiple-value-bind (more? element-name nodes-numbers)
-               (iterator)
-             (if more?
-                 (progn
-                   (setq element (first (select-element :predicate (where :name element-name)
-                                                        :network (problem-struct-network problem))))
-                   (typecase element
-                     (bipole-struct
-                      (when (and verbose-p
-                                 (> verbose 10))
-                        (printout :message "bipole ~a ~s.~&" element-name nodes-numbers))
-                      ;;(setq value (->phasor (getf (bipole-struct-model-parameters element) :value)))
-                      (setq value (getf (bipole-struct-model-parameters element) :value))
-                      (if value
-                          (progn
-                            (case (bipole-struct-kind element)
-                              (:resistance
-                               (if (realp value)
-                                   (setq value (/ 1d0 (complex value 0d0)))
-                                   (progn
-                                     (when (and verbose-p
-                                                (> verbose 10))
-                                       (printout :error
-                                                 "no suitable resistance value ~a: allowed values are real.~&"
-                                                 element-name))
-                                     (setq ok? nil)
-                                     (return-from main-loop))))
-                              (:inductance
-                               (if (realp value)
-                                   (setq value (/ 1d0
-                                                  (complex 0d0
-                                                           (* 2d0 pi (problem-struct-frequency problem) value))))
-                                   (progn
-                                     (when (and verbose-p
-                                                (> verbose 10))
-                                       (printout :error "no suitable inductance value ~a: allowed values are real.~&" element-name))
-                                     (setq ok? nil)
-                                     (return-from main-loop))))
-                              (:capacitance
-                               (if (realp value)
-                                   (setq value (complex 0d0 (* 2d0 pi (problem-struct-frequency problem) value)))
-                                   (progn
-                                     (when (and verbose-p
-                                                (> verbose 10))
-                                       (printout :error "no suitable capacitance value ~a: allowed values are real.~&" element-name))
-                                     (setq ok? nil)
-                                     (return-from main-loop))))
-                              (:reactance
-                               (if (realp value)
-                                   (setq value (/ 1d0 (complex 0d0 value)))
-                                   (progn
-                                     (when (and verbose-p
-                                                (> verbose 10))
-                                       (printout :error "no suitable reactance value ~a: allowed values are real.~&" element-name))
-                                     (setq ok? nil)
-                                     (return-from main-loop))))
-                              (:impedance
-                               (if (complexp value)
-                                   (setq value (/ 1d0 value))
-                                   (progn
-                                     (when (and verbose-p
-                                                (> verbose 10))
-                                       (printout :error "no suitable impedance value ~a: allowed values are complex.~&" element-name))
-                                     (setq ok? nil)
-                                     (return-from main-loop))))
-                              (:conductance
-                               (if (realp value)
-                                   (setq value (complex value 0d0))
-                                   (progn
-                                     (when (and verbose-p
-                                                (> verbose 10))
-                                       (printout :error "no suitable conductance value ~a: allowed values are real.~&" element-name))
-                                     (setq ok? nil)
-                                     (return-from main-loop))))
-                              (:susceptance
-                               (if (realp value)
-                                   (setq value (complex 0d0 value))
-                                   (progn
-                                     (when (and verbose-p
-                                                (> verbose 10))
-                                       (printout :error "no suitable susceptance value ~a: allowed values are real.~&" element-name))
-                                     (setq ok? nil)
-                                     (return-from main-loop))))
-                              (:admittance
-                               (if (complexp value)
-                                   ()
-                                   (progn
-                                     (when (and verbose-p
-                                                (> verbose 10))
-                                       (printout :error "no suitable admittance value for ~a: allowed values are complex.~&" element-name))
-                                     (setq ok? nil)
-                                     (return-from main-loop)))))
-                            (case (length nodes-numbers)
-                              (1
-                               (incf (grid:gref admittances-matrix (first nodes-numbers) (first nodes-numbers)) value))
-                              (2
-                               (if (check-connection-nodes element)
-                                   (progn
-                                     (decf (grid:gref admittances-matrix (first nodes-numbers) (second nodes-numbers)) value)
-                                     (decf (grid:gref admittances-matrix (second nodes-numbers) (first nodes-numbers)) value)
-                                     (incf (grid:gref admittances-matrix (first nodes-numbers) (first nodes-numbers)) value)
-                                     (incf (grid:gref admittances-matrix (second nodes-numbers) (second nodes-numbers)) value))
-                                   (progn
-                                     (setq ok? nil)
-                                     (when (and verbose-p
-                                                (> verbose 10))
-                                       (printout :error "bipole ~a has got wrong connection nodes ~s.~&" (bipole-struct-name element) (bipole-struct-nodes element)))
-                                     (return-from main-loop))))))
-                          (progn
-                            (setq ok? nil)
-                            (when (and verbose-p
-                                       (> verbose 10))
-                              (printout :error "wrong value ~s for bipole ~a.~&" value element-name))
-                            (return-from main-loop))))
-                     (multipole-struct
-                      (setq ok? nil)
-                      (when (and verbose-p
-                                 (> verbose 10))
-                        (printout :error "multipole elements are not implemented yet.~&"))
-                      (return-from main-loop))))
-                 (return-from main-loop)))))
+    (loop
+       initially (setq ok? t)
+       with value = nil
+       with nodes-numbers = nil
+       named bipoles-loop
+       for bipole in bipoles
+       do
+         (when (and verbose-p
+                    (> verbose 10))
+           (printout :message "bipole ~s.~&" bipole))
+         (setq value (getf (bipole-struct-model-parameters bipole) :value))
+         (if value
+             (progn
+               (case (bipole-struct-kind bipole)
+                 (:resistance
+                  (if (realp value)
+                      (setq value (/ 1d0 (complex value 0d0)))
+                      (progn
+                        (when (and verbose-p
+                                   (> verbose 10))
+                          (printout :error
+                                    "bipole ~a no suitable resistance value ~a: allowed values are real.~&"
+                                    (bipole-struct-name bipole)
+                                    value))
+                        (setq ok? nil)
+                        (return-from bipoles-loop))))
+                 (:inductance
+                  (if (realp value)
+                      (setq value (/ 1d0
+                                     (complex 0d0
+                                              (* 2d0 pi (problem-struct-frequency problem) value))))
+                      (progn
+                        (when (and verbose-p
+                                   (> verbose 10))
+                          (printout :error
+                                    "bipole ~a no suitable inductance value ~a: allowed values are real.~&"
+                                    (bipole-struct-name bipole)
+                                    value))
+                        (setq ok? nil)
+                        (return-from bipoles-loop))))
+                 (:capacitance
+                  (if (realp value)
+                      (setq value (complex 0d0 (* 2d0 pi (problem-struct-frequency problem) value)))
+                      (progn
+                        (when (and verbose-p
+                                   (> verbose 10))
+                          (printout :error
+                                    "bipole ~a no suitable capacitance value ~a: allowed values are real.~&"
+                                    (bipole-struct-name bipole)
+                                    value))
+                        (setq ok? nil)
+                        (return-from bipoles-loop))))
+                 (:reactance
+                  (if (realp value)
+                      (setq value (/ 1d0 (complex 0d0 value)))
+                      (progn
+                        (when (and verbose-p
+                                   (> verbose 10))
+                          (printout :error
+                                    "bipole ~a no suitable reactance value ~a: allowed values are real.~&"
+                                    (bipole-struct-name bipole)
+                                    value))
+                        (setq ok? nil)
+                        (return-from bipoles-loop))))
+                 (:impedance
+                  (if (complexp value)
+                      (setq value (/ 1d0 value))
+                      (progn
+                        (when (and verbose-p
+                                   (> verbose 10))
+                          (printout :error
+                                    "bipole ~a no suitable impedance value ~a: allowed values are complex.~&"
+                                    (bipole-struct-name bipole)
+                                    value))
+                        (setq ok? nil)
+                        (return-from bipoles-loop))))
+                 (:conductance
+                  (if (realp value)
+                      (setq value (complex value 0d0))
+                      (progn
+                        (when (and verbose-p
+                                   (> verbose 10))
+                          (printout :error
+                                    "bipole ~a no suitable conductance value ~a: allowed values are real.~&"
+                                    (bipole-struct-name bipole)
+                                    value))
+                        (setq ok? nil)
+                        (return-from bipoles-loop))))
+                 (:susceptance
+                  (if (realp value)
+                      (setq value (complex 0d0 value))
+                      (progn
+                        (when (and verbose-p
+                                   (> verbose 10))
+                          (printout :error
+                                    "bipole ~a no suitable susceptance value ~a: allowed values are real.~&"
+                                    (bipole-struct-name bipole)
+                                    value))
+                        (setq ok? nil)
+                        (return-from bipoles-loop))))
+                 (:admittance
+                  (if (complexp value)
+                      ()
+                      (progn
+                        (when (and verbose-p
+                                   (> verbose 10))
+                          (printout :error
+                                    "bipole ~a no suitable admittance value for ~a: allowed values are complex.~&"
+                                    (bipole-struct-name bipole)
+                                    value))
+                        (setq ok? nil)
+                        (return-from bipoles-loop)))))
+               (if (check-connection-nodes bipole)
+                   (progn
+                     (setq nodes-numbers nil)
+                     (loop
+                        for node-name in (bipole-struct-nodes bipole)
+                        with node = nil
+                        do
+                          (setq node (first (select-element :predicate (where :name node-name)
+                                                            :elements (problem-struct-network problem))))
+                          (if node
+                              (case (node-struct-kind node)
+                                (:reference
+                                 ())
+                                (t
+                                 (push (node-struct-tag node) nodes-numbers)))
+                              (progn
+                                (setq ok? nil)
+                                (when (integerp verbose)
+                                  (when (> verbose 10)
+                                    (printout :error "no node named ~a.~&" node-name)))
+                                (return-from bipoles-loop))))
+                     (case (length nodes-numbers)
+                       (1
+                        (incf (grid:gref admittances-matrix (first nodes-numbers) (first nodes-numbers)) value))
+                       (2
+                        (decf (grid:gref admittances-matrix (first nodes-numbers) (second nodes-numbers)) value)
+                        (decf (grid:gref admittances-matrix (second nodes-numbers) (first nodes-numbers)) value)
+                        (incf (grid:gref admittances-matrix (first nodes-numbers) (first nodes-numbers)) value)
+                        (incf (grid:gref admittances-matrix (second nodes-numbers) (second nodes-numbers)) value))))
+                   (progn
+                     (setq ok? nil)
+                     (when (and verbose-p
+                                (> verbose 10))
+                       (printout :error
+                                 "bipole ~a has got wrong connection nodes ~s.~&"
+                                 (bipole-struct-name bipole)
+                                 (bipole-struct-nodes bipole)))
+                     (return-from bipoles-loop))))
+             (progn
+               (setq ok? nil)
+               (when (and verbose-p
+                          (> verbose 10))
+                 (printout :error
+                           "wrong value ~s for bipole ~a.~&"
+                           value
+                           (bipole-struct-name bipole)))
+               (return-from bipoles-loop))))
     (when (and verbose-p
                (> verbose 10))
       (printout :message "Y = ~s.~&" admittances-matrix)
       (when (> verbose 5)
         (printout :message "exiting create-admittances-matrix().~%~%")))
     (values admittances-matrix
-            ok?)))
-
-(defun create-jacobian-matrix (&rest parameters &key
-                                                  (problem nil problem-p)
-                                                  (verbose nil verbose-p))
-  (declare (ignorable parameters
-                      problem
-                      verbose))
-  (when problem-p
-    (check-type problem problem-struct))
-  (when verbose-p
-    (check-type verbose (or integer null)))
-  (when (integerp verbose)
-    (when (> verbose 5)
-      (printout :message "entering create-jacobian-matrix().~&")))
-  (let ((nodes (remove-if-not #'(lambda (x)
-                                  (typep x 'node-struct))
-                              (problem-struct-network problem)))
-        (dp/dtheta-matrix nil)
-        (dq/dtheta-matrix nil)
-        (dp/dv-matrix nil)
-        (dq/dv-matrix nil)
-        (ok? nil))
-    (if nodes
-        (multiple-value-bind (p-nodes-count q-nodes-count)
-            (count-power-nodes :nodes nodes
-                               :verbose verbose)
-          (if (and (> p-nodes-count 0)
-                   (> q-nodes-count 0))
-              (setq ok? t
-                    dp/dtheta-matrix (grid:make-foreign-array 'double-float
-                                                              :dimensions (list p-nodes-count p-nodes-count)
-                                                              :initial-element 0d0)
-                    dq/dtheta-matrix (grid:make-foreign-array 'double-float
-                                                              :dimensions (list q-nodes-count p-nodes-count)
-                                                              :initial-element 0d0)
-                    dp/dv-matrix (grid:make-foreign-array 'double-float
-                                                          :dimensions (list p-nodes-count q-nodes-count)
-                                                          :initial-element 0d0)
-                    dq/dv-matrix (grid:make-foreign-array 'double-float
-                                                          :dimensions (list q-nodes-count q-nodes-count)
-                                                          :initial-element 0d0))
-              (when (integerp verbose)
-                (when (> verbose 10)
-                  (printout :message "could not create the Jacobian matrix.~&")))))
-        (when (integerp verbose)
-          (when (> verbose 10)
-            (printout :message "no nodes in the network.~&"))))
-    (when (integerp verbose)
-      (when (> verbose 5)
-        (printout :message "exiting calculate-jacobian().~%~%")))
-    (values dp/dtheta-matrix
-            dq/dtheta-matrix
-            dp/dv-matrix
-            dq/dv-matrix
             ok?)))
 
 (defun count-power-nodes (&rest parameters &key
@@ -803,3 +770,58 @@
       (when (> verbose 5)
         (printout :message "exiting count-power-nodes().~%~%")))
     (values p-nodes-count q-nodes-count)))
+
+(defun create-jacobian-submatrices (&rest parameters &key
+                                                       (problem nil problem-p)
+                                                       (verbose nil verbose-p))
+  (declare (ignorable parameters
+                      problem
+                      verbose))
+  (when problem-p
+    (check-type problem problem-struct))
+  (when verbose-p
+    (check-type verbose (or integer null)))
+  (when (integerp verbose)
+    (when (> verbose 5)
+      (printout :message "entering create-jacobian-submatrices().~&")))
+  (let ((nodes (remove-if-not #'(lambda (x)
+                                  (typep x 'node-struct))
+                              (problem-struct-network problem)))
+        (dp/dtheta-matrix nil)
+        (dq/dtheta-matrix nil)
+        (dp/dv-matrix nil)
+        (dq/dv-matrix nil)
+        (ok? nil))
+    (if nodes
+        (multiple-value-bind (p-nodes-count q-nodes-count)
+            (count-power-nodes :nodes nodes
+                               :verbose verbose)
+          (if (and (> p-nodes-count 0)
+                   (> q-nodes-count 0))
+              (setq ok? t
+                    dp/dtheta-matrix (grid:make-foreign-array 'double-float
+                                                              :dimensions (list p-nodes-count p-nodes-count)
+                                                              :initial-element 0d0)
+                    dq/dtheta-matrix (grid:make-foreign-array 'double-float
+                                                              :dimensions (list q-nodes-count p-nodes-count)
+                                                              :initial-element 0d0)
+                    dp/dv-matrix (grid:make-foreign-array 'double-float
+                                                          :dimensions (list p-nodes-count q-nodes-count)
+                                                          :initial-element 0d0)
+                    dq/dv-matrix (grid:make-foreign-array 'double-float
+                                                          :dimensions (list q-nodes-count q-nodes-count)
+                                                          :initial-element 0d0))
+              (when (integerp verbose)
+                (when (> verbose 10)
+                  (printout :message "could not create the Jacobian matrix.~&")))))
+        (when (integerp verbose)
+          (when (> verbose 10)
+            (printout :message "no nodes in the network.~&"))))
+    (when (integerp verbose)
+      (when (> verbose 5)
+        (printout :message "exiting create-jacobian-submatrices().~%~%")))
+    (values dp/dtheta-matrix
+            dq/dtheta-matrix
+            dp/dv-matrix
+            dq/dv-matrix
+            ok?)))

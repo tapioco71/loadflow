@@ -32,6 +32,7 @@
 
 (defstruct (node-struct (:include network-element-struct)
                         (:constructor make-node))
+  (tag nil :type (or (unsigned-byte 64) null))
   (bond nil :type (or bond-struct null)))
 
 ;; Functions.
@@ -40,12 +41,14 @@
                                      (name (symbol-name (gensym "node-")) name-p)
                                      (kind nil kind-p)
                                      (data nil data-p)
+                                     (tag nil tag-p)
                                      (bond nil bond-p))
   "Create a bode/bar object for the node structure."
   (declare (ignorable parameters
                       name
                       kind
                       data
+                      tag
                       bond))
   (when name-p
     (check-type name (or symbol string (unsigned-byte 64) null)))
@@ -53,12 +56,15 @@
     (check-type kind (or keyword list)))
   (when data-p
     (check-type data list))
+  (when tag-p
+    (check-type tag (or (unsigned-byte 64) null)))
   (when bond-p
     (check-type bond (or bond-struct null)))
   (let ((object (allocate-instance (find-class 'node-struct))))
     (setf (node-struct-name object) name
           (node-struct-kind object) kind
           (node-struct-data object) data
+          (node-struct-tag object) tag
           (node-struct-bond object) bond)
     object))
 
@@ -73,10 +79,53 @@
   (case (node-struct-kind object)
     (:generation
      (case (bond-struct-kind (node-struct-kind object))
-       (:p-e t)
-       (:q-e t)
+       (:p-v t)
+       (:q-v t)
        (:p-q t)
-       (:e-theta)))
+       (:v-theta)))
     (:load
      (case (bond-struct-kind (node-struct-kind object))
+       (:v=f(Q) t)
        (:p-q t)))))
+
+(defmethod reference-p ((object node-struct))
+  (equalp (node-struct-kind object) :reference))
+
+(defmethod load-p ((object node-struct))
+  (equalp (node-struct-kind object) :load))
+
+(defmethod generation-p ((object node-struct))
+  (equalp (node-struct-kind object) :generation))
+
+(defmethod interconnection-p ((object node-struct))
+  (equalp (node-struct-kind object) :interconnection))
+
+(defmethod kind-p ((object node-struct) node-kind)
+  (assert (member node-kind *node-kind* :test #'equalp))
+  (equalp (node-struct-kind object) node-kind))
+
+(defun where-node (&rest parameters &key
+                                      (data nil data-p)
+                                      (tag nil tag-p)
+                                      (bond nil bond-p))
+  "Return a closure which test, for different combinations of
+   keys, the node-struct object argument."
+  (declare (ignorable parameters
+                      name
+                      kind))
+  (when data-p
+    (check-type data list))
+  (when tag-p
+    (check-type tag (or (unsigned-byte 64) null)))
+  (when bond-p
+    (check-type bond bond-struct))
+  #'(lambda (x)
+      (and (if data-p
+               (equalp (node-struct-data x) data)
+               t)
+           (if tag-p
+               (eql (node-struct-tag x) tag)
+               t)
+           (if bond-p
+               (equalp (node-struct-bond x) bond)
+               t))))

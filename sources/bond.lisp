@@ -26,7 +26,7 @@
                              :q-v
                              :p-q
                              :v-theta
-                             :v=f(Q)))
+                             :v=f[Q]))
 
 ;; Structures.
 
@@ -103,3 +103,23 @@
     (when voltage-phase-p
       (setf (bond-struct-voltage-phase object) voltage-phase))
     object))
+
+
+(defmethod p-q-p ((object bond-struct))
+  (equalp (bond-struct-kind object) :p-q))
+
+(defmethod p-v-p ((object bond-struct))
+  (equalp (bond-struct-kind object) :p-v))
+
+(defmethod q-v-p ((object bond-struct))
+  (equalp (bond-struct-kind object) :q-v))
+
+(defmethod v-theta-p ((object bond-struct))
+  (equalp (bond-struct-kind object) :v-theta))
+
+(defmethod v=f[Q]-p ((object bond-struct))
+  (equalp (bond-struct-kind object) :v=f[Q]))
+
+(defmethod kind-p ((object bond-struct) bond-kind)
+  (assert (member bond-kind *bond-kind* :test #'equalp))
+  (equalp (bond-struct-kind object) bond-kind))

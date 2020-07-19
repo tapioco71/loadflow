@@ -19,10 +19,10 @@
 ;;    along with Loadflow (LF).  If not, see <http://www.gnu.org/licenses/>.
 
 #s(problem-struct :name "test-problem-15"
-                  :maximum-iterations-count 100
-                  :alpha #(1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3)
-                  :beta #(1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3 1d-3)
-                  :epsilon-power #c(1d3 1d3)
+                  :maximum-iterations-count 10
+;;                  :alpha #(1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6)
+;;                  :beta #(1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6)
+                  :epsilon-power #c(2d3 2d3)
                   :frequency 50d0
                   :author "Angelo Rossi"
                   :date 3803983819
