@@ -22,22 +22,14 @@
 
 ;; Parameters.
 
-(defparameter *solver-types* '(:newton-raphson-polar
-                               :newton-raphson-complex
-                               :carpentier
-                               :stott
-                               :ward-hale
-                               :glimn-stagg))
-
 ;; Structures.
 
 (defstruct (problem-struct (:constructor make-problem))
   (name "" :type (or symbol string null))
-  (solver-type :newton-raphson-polar :type (or keyword null))
   (maximum-iterations-count 100 :type (integer 1))
   (epsilon-power nil :type (or real complex phasor-struct null))
-  (alpha nil :type (or (array * (*)) grid:foreign-array null))
-  (beta nil :type (or (array * (*)) grid:foreign-array null))
+  (alpha nil :type (or real null))
+  (beta nil :type (or real null))
   (frequency nil :type (or real null))
   (threaded nil :type t)
   (author "" :type (or string null))
@@ -51,7 +43,6 @@
 
 (defun make-problem (&rest parameters &key
                                         (name (symbol-name (gensym "problem-")) name-p)
-                                        (solver-type :newton-raphson-polar solver-type-p)
                                         (maximum-iterations-count 100 maximum-iterations-count-p)
                                         (epsilon-power #c(1d-3 1d-3) epsilon-power-p)
                                         (alpha nil alpha-p)
@@ -67,7 +58,6 @@
   "Create a new object of problem structure type."
   (declare (ignorable parameters
                       name
-                      solver-type
                       maximum-iterations-count
                       epsilon-power
                       alpha
@@ -82,16 +72,14 @@
                       data))
   (when name-p
     (check-type name (or symbol string null)))
-  (when solver-type-p
-    (assert (member solver-type *solver-types* :test #'equalp)))
   (when maximum-iterations-count-p
     (check-type maximum-iterations-count (integer 1)))
   (when epsilon-power-p
     (check-type epsilon-power (or real complex phasor-struct)))
   (when alpha-p
-    (check-type alpha (or (array * (*)) grid:foreign-array null)))
+    (check-type alpha (or real null)))
   (when beta-p
-    (check-type beta (or (array * (*)) grid:foreign-array null)))
+    (check-type beta (or real null)))
   (when frequency-p
     (check-type frequency (or real null)))
   (when author-p
@@ -112,15 +100,14 @@
     (check-type data list))
   (let ((object (allocate-instance (find-class 'problem-struct))))
     (setf (problem-struct-name object) name
-          (problem-struct-solver-type object) solver-type
           (problem-struct-maximum-iterations-count object) maximum-iterations-count
           (problem-struct-epsilon-power object) epsilon-power
           (problem-struct-alpha object) (if alpha
-                                            (grid:copy-to alpha 'grid:foreign-array 'double-float)
-                                            nil)
+                                            alpha
+                                            1d0)
           (problem-struct-beta object) (if beta
-                                           (grid:copy-to beta 'grid:foreign-array 'double-float)
-                                           nil)
+                                           beta
+                                           1d0)
           (problem-struct-frequency object) frequency
           (problem-struct-threaded object) threaded
           (problem-struct-author object) author

@@ -19,7 +19,6 @@
 ;;    along with Loadflow (LF).  If not, see <http://www.gnu.org/licenses/>.
 
 #s(problem-struct :name "test-problem-6"
-                  :solver-type :newton-raphson-polar
                   :maximum-iterations-count 5
                   :epsilon-power #c(1d0 1d0)
                   :frequency 50d0
