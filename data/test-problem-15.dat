@@ -20,9 +20,9 @@
 
 #s(problem-struct :name "test-problem-15"
                   :maximum-iterations-count 10
-;;                  :alpha #(1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6)
-;;                  :beta #(1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6 1d-6)
-                  :epsilon-power #c(2d3 2d3)
+                  :alpha #(4.25d-1 4.25d-1 4.25d-1 4.25d-1 4.25d-1 4.25d-1 4.25d-1 4.25d-1 4.25d-1 4.25d-1 4.25d-1 4.25d-1 4.25d-1)
+                  :beta #(5d-1 5d-1 5d-1 5d-1 5d-1 5d-1 5d-1 5d-1 5d-1 5d-1 5d-1 5d-1 5d-1)
+                  :epsilon-power #c(10d3 10d3)
                   :frequency 50d0
                   :author "Angelo Rossi"
                   :date 3803983819

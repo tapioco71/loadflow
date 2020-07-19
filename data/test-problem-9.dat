@@ -19,10 +19,8 @@
 ;;    along with Loadflow (LF).  If not, see <http://www.gnu.org/licenses/>.
 
 #s(problem-struct :name "test-problem-9"
-                  :solver-type :newton-raphson-polar
                   :maximum-iterations-count 200
                   :epsilon-power #c(2d0 2d0)
-                  :alpha #(7.3d-1 7.3d-1 7.3d-1 7.3d-1 7.3d-1 7.3d-1)
                   :frequency 50d0
                   :author "Angelo Rossi"
                   :date 3802933200
