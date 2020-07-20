@@ -21,9 +21,15 @@
 (defpackage #:loadflow
   (:nicknames #:lf)
   (:use #:cl)
-  (:export #:make-network-element
+  (:export #:network-element
+           #:node-struct
+           #:multipole-struct
+           #:bipole-struct
+           #:bond-struct
+           #:problem-struct
+           #:make-network-element
            #:make-node
-           #:make-n-pole
+           #:make-multipole
            #:make-bipole
            #:make-bond
            #:make-problem
