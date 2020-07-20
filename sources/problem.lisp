@@ -239,7 +239,7 @@
                  (typecase element
                    (node-struct
                     (case (node-struct-kind element)
-                      ((or :load :generation :voltage :interconnection)
+                      ((or :load :generation :interconnection)
                        (when (and verbose-p
                                   (> verbose 10))
                          (printout :message "adding node ~a of type ~a as number ~a.~&" (node-struct-name element) (node-struct-kind element) nodes-count))
@@ -354,9 +354,7 @@
          with load-nodes-count = 0
          with unknown-voltages-count = 0
          with unknown-thetas-count = 0
-         for node in (remove-if-not #'(lambda (x)
-                                        (typep x 'node-struct))
-                                    (problem-struct-network problem))
+         for node in (extract-nodes problem)
          do
            (case (node-struct-kind node)
              (:generation
@@ -377,10 +375,9 @@
                  (setf (aref temp-cv-matrix unknown-voltages-count (node-struct-tag node)) 1d0
                        (aref temp-ctheta-matrix unknown-thetas-count (node-struct-tag node)) 1d0)
                  (incf unknown-voltages-count)
-                 (incf unknown-thetas-count)
-                 (incf generation-nodes-count))
+                 (incf unknown-thetas-count))
                 (:v-theta
-                 (incf generation-nodes-count))
+                 ())
                 (t
                  (setq ok? nil)
                  (when (integerp verbose)
@@ -390,11 +387,12 @@
                                (bond-struct-name (node-struct-bond node))
                                (bond-struct-kind (node-struct-bond node))
                                (node-struct-name node))))
-                 (return-from nodes-loop))))
+                 (return-from nodes-loop)))
+              (incf generation-nodes-count))
              (:load
               (case (bond-struct-kind (node-struct-bond node))
-                (:v=f(Q)
-                     ())
+                (:v=f[Q]
+                 (incf unknown-thetas-count))
                 (:p-q
                  (adjust-array temp-cv-matrix
                                (list (1+ unknown-voltages-count) nodes-count)
@@ -405,8 +403,7 @@
                  (setf (aref temp-cv-matrix unknown-voltages-count (node-struct-tag node)) 1d0
                        (aref temp-ctheta-matrix unknown-thetas-count (node-struct-tag node)) 1d0)
                  (incf unknown-voltages-count)
-                 (incf unknown-thetas-count)
-                 (incf load-nodes-count))
+                 (incf unknown-thetas-count))
                 (t
                  (setq ok? nil)
                  (when (integerp verbose)
@@ -416,7 +413,8 @@
                                (bond-struct-name (node-struct-bond node))
                                (bond-struct-kind (node-struct-bond node))
                                (node-struct-name node))))
-                 (return-from nodes-loop))))
+                 (return-from nodes-loop)))
+              (incf load-nodes-count))
              (:interconnection
               (adjust-array temp-cv-matrix
                             (list (1+ unknown-voltages-count) nodes-count)
