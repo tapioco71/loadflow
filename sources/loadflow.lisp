@@ -44,15 +44,13 @@
     (check-type thetas-vector grid:foreign-array))
   (when verbose-p
     (check-type verbose (or integer null)))
-  (when (and verbose-p
-             (> verbose 5))
-    (printout :message "entering assign-initial-solution().~&"))
+  (when (integerp verbose)
+    (when (> verbose 5)
+      (printout :message "entering assign-initial-solution().~&")))
   (let ((ok? nil))
     (loop
        named nodes-loop
-       for node in (remove-if-not #'(lambda (x)
-                                      (typep x 'node-struct))
-                                  (problem-struct-network problem))
+       for node in (extract-nodes problem)
        do
          (case (node-struct-kind node)
            (:generation
@@ -711,9 +709,9 @@
     (check-type p-vector grid:foreign-array))
   (when q-vector-p
     (check-type q-vector grid:foreign-array))
-  (when (and verbose-p
-             (> verbose 5))
-    (printout :message "entering calculate-currents().~&"))
+  (when (integerp verbose)
+    (when (> verbose 5)
+      (printout :message "entering calculate-currents().~&")))
   (let ((nodes (extract-nodes problem))
         (bipoles (extract-bipoles problem))
         (current nil)
@@ -738,9 +736,9 @@
                (push (list :bond-name (bond-struct-name (node-struct-bond node))
                            :current bond-current)
                      bond-currents)
-               (when (and (integerp verbose)
-                          (> verbose 10))
-                 (printout :message "Generation P-E bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current)))
+               (when (integerp verbose)
+                 (when (> verbose 10)
+                   (printout :message "Generation P-E bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))
               (:q-v
                (setq bond-current (->phasor (/ (conjugate (complex (grid:gref p-vector (node-struct-tag node))
                                                                    (bond-struct-reactive-power (node-struct-bond node))))
@@ -750,9 +748,9 @@
                (push (list :bond-name (bond-struct-name (node-struct-bond node))
                            :current bond-current)
                      bond-currents)
-               (when (and (integerp verbose)
-                          (> verbose 10))
-                 (printout :message "Generation Q-E bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current)))
+               (when (integerp verbose)
+                 (when (> verbose 10)
+                   (printout :message "Generation Q-E bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))
               (:p-q
                (setq bond-current (->phasor (/ (conjugate (complex (bond-struct-active-power (node-struct-bond node))
                                                                    (bond-struct-reactive-power (node-struct-bond node))))
@@ -762,9 +760,9 @@
                (push (list :bond-name (bond-struct-name (node-struct-bond node))
                            :current bond-current)
                      bond-currents)
-               (when (and (integerp verbose)
-                          (> verbose 10))
-                 (printout :message "Generation P-Q bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current)))
+               (when (integerp verbose)
+                 (when (> verbose 10)
+                   (printout :message "Generation P-Q bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))
               (:v-theta
                (push (list :bond-name (bond-struct-name (node-struct-bond node))
                            :current (->phasor (/ (conjugate (complex (grid:gref p-vector (node-struct-tag node))
@@ -773,9 +771,9 @@
                                                     (exp (* #c(0d0 1d0)
                                                             (grid:gref thetas-vector (node-struct-tag node))))))))
                      bond-currents)
-               (when (and (integerp verbose)
-                          (> verbose 10))
-                 (printout :message "Generation V-theta bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current)))))
+               (when (integerp verbose)
+                 (when (> verbose 10)
+                   (printout :message "Generation V-theta bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))))
            (:load
             (case (bond-struct-kind (node-struct-bond node))
               (:p-q
@@ -787,9 +785,9 @@
                (push (list :bond-name (bond-struct-name (node-struct-bond node))
                            :current bond-current)
                      bond-currents)
-               (when (and (integerp verbose)
-                          (> verbose 10))
-                 (printout :message "Load P-Q bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current)))))))
+               (when (integerp verbose)
+                 (when (> verbose 10)
+                   (printout :message "Load P-Q bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))))))
     (when ok?
       (loop
          named bipoles-loop
@@ -852,17 +850,17 @@
                        :current current
                        :voltage-across (->phasor voltage-across))
                  currents)
-           (when (and verbose-p
-                      (> verbose 10))
-             (printout :message
-                       "~a(~{~a~^, ~}) voltage across = ~s, current ~s~%"
-                       (bipole-struct-name bipole)
-                       nodes-numbers
-                       voltage-across
-                       current))))
-    (when (and verbose-p
-               (> verbose 5))
-      (printout :message "exiting calculate-currents().~%~%"))
+           (when (integerp verbose)
+             (when (> verbose 10)
+               (printout :message
+                         "~a(~{~a~^, ~}) voltage across = ~s, current ~s~%"
+                         (bipole-struct-name bipole)
+                         nodes-numbers
+                         voltage-across
+                         current)))))
+    (when (integerp verbose)
+      (when (> verbose 5)
+        (printout :message "exiting calculate-currents().~%~%")))
     (values currents
             bond-currents
             ok?)))
@@ -1206,7 +1204,7 @@
 
 (defun loadflow (&rest parameters &key
                                     (problem-file-pathname nil problem-file-pathname-p)
-                                    (verbose 10 verbose-p))
+                                    (verbose nil verbose-p))
   (declare (ignorable parameters
                       problem-file-pathname
                       verbose))

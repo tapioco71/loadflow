@@ -172,22 +172,22 @@
     (check-type problem-file-pathname pathname))
   (when verbose-p
     (check-type verbose (or integer null)))
-  (when (and verbose-p
-             (> verbose 5))
-    (printout :message "get-input-data()~&"))
+  (when (integerp verbose)
+    (when (> verbose 5)
+      (printout :message "get-input-data()~&")))
   (multiple-value-bind (problem ok?)
       (load-problem :problem-file-pathname problem-file-pathname
                     :verbose verbose)
     (if ok?
-        (when (and verbose-p
-                   (> verbose 10))
-          (printout :message "problem ~a loaded.~&" (problem-struct-name problem)))
-        (when (and verbose-p
-                   (> verbose 10))
-          (printout :error "could not load problem in file ~s.~&" problem-file-pathname)))
-    (when (and verbose-p
-               (> verbose 5))
-      (printout :message "exiting get-input-data().~%~%"))
+        (when (integerp verbose)
+          (when (> verbose 10)
+            (printout :message "problem ~a loaded.~&" (problem-struct-name problem))))
+        (when (integerp verbose)
+          (when (> verbose 10)
+            (printout :error "could not load problem in file ~s.~&" problem-file-pathname))))
+    (when (integerp verbose)
+      (when (> verbose 5)
+        (printout :message "exiting get-input-data().~%~%")))
     (values problem
             ok?)))
 
@@ -338,9 +338,9 @@
     (check-type problem problem-struct))
   (when verbose-p
     (check-type verbose (or integer null)))
-  (when (and verbose-p
-             (> verbose 5))
-    (printout :message "entering create-connection-matrices().~&"))
+  (when (integerp verbose)
+    (when (> verbose 5)
+      (printout :message "entering create-connection-matrices().~&")))
   (let* ((nodes-count (1- (count-elements :problem problem
                                           :typename 'node-struct)))
          (temp-cv-matrix (make-array (list 0 0) :element-type 'double-float :initial-element 0d0 :adjustable t))
@@ -381,7 +381,7 @@
                 (t
                  (setq ok? nil)
                  (when (integerp verbose)
-                   (when (> verbose 5)
+                   (when (> verbose 10)
                      (printout :error
                                "bond ~a unknown kind ~a for generation node ~a.~&"
                                (bond-struct-name (node-struct-bond node))
@@ -407,7 +407,7 @@
                 (t
                  (setq ok? nil)
                  (when (integerp verbose)
-                   (when (> verbose 5)
+                   (when (> verbose 10)
                      (printout :error
                                "bond ~a unknown kind ~a for load node ~a.~&"
                                (bond-struct-name (node-struct-bond node))
@@ -429,13 +429,13 @@
               (incf load-nodes-count))))
       (setq cv-matrix (grid:copy-to temp-cv-matrix 'grid:foreign-array)
             ctheta-matrix (grid:copy-to temp-ctheta-matrix 'grid:foreign-array))
-      (when (and verbose-p
-                 (> verbose 10))
-        (printout :message "Cv = ~s, dim(Cv) = ~s.~&" cv-matrix (grid:dimensions cv-matrix))
-        (printout :message "Ctheta = ~s, dim(Cv) = ~s.~&" ctheta-matrix (grid:dimensions ctheta-matrix)))
-      (when (and verbose-p
-                 (> verbose 5))
-        (printout :message "exiting create-connection-matrices().~%~%"))
+      (when (integerp verbose)
+        (when (> verbose 10)
+          (printout :message "Cv = ~s, dim(Cv) = ~s.~&" cv-matrix (grid:dimensions cv-matrix))
+          (printout :message "Ctheta = ~s, dim(Cv) = ~s.~&" ctheta-matrix (grid:dimensions ctheta-matrix))))
+      (when (integerp verbose)
+        (when (> verbose 5)
+          (printout :message "exiting create-connection-matrices().~%~%")))
       (values cv-matrix
               ctheta-matrix
               ok?))))
@@ -516,9 +516,9 @@
     (check-type problem problem-struct))
   (when verbose-p
     (check-type verbose (or integer null)))
-  (when (and verbose-p
-             (> verbose 5))
-    (printout :message "entering create admittances matrix().~&"))
+  (when (integerp verbose)
+    (when (> verbose 5)
+      (printout :message "entering create admittances matrix().~&")))
   (let* ((order (1- (count-elements :problem problem
                                     :typename 'node-struct)))
          (admittances-matrix (grid:make-foreign-array '(complex double-float)
@@ -538,9 +538,9 @@
        named bipoles-loop
        for bipole in bipoles
        do
-         (when (and verbose-p
-                    (> verbose 10))
-           (printout :message "bipole ~s.~&" bipole))
+         (when (integerp verbose)
+           (when (> verbose 10)
+             (printout :message "bipole ~s.~&" bipole)))
          (setq value (getf (bipole-struct-model-parameters bipole) :value))
          (if value
              (progn
@@ -549,12 +549,12 @@
                   (if (realp value)
                       (setq value (/ 1d0 (complex value 0d0)))
                       (progn
-                        (when (and verbose-p
-                                   (> verbose 10))
-                          (printout :error
-                                    "bipole ~a no suitable resistance value ~a: allowed values are real.~&"
-                                    (bipole-struct-name bipole)
-                                    value))
+                        (when (integerp verbose)
+                          (when (> verbose 10)
+                            (printout :error
+                                      "bipole ~a no suitable resistance value ~a: allowed values are real.~&"
+                                      (bipole-struct-name bipole)
+                                      value)))
                         (setq ok? nil)
                         (return-from bipoles-loop))))
                  (:inductance
@@ -563,84 +563,84 @@
                                      (complex 0d0
                                               (* 2d0 pi (problem-struct-frequency problem) value))))
                       (progn
-                        (when (and verbose-p
-                                   (> verbose 10))
-                          (printout :error
-                                    "bipole ~a no suitable inductance value ~a: allowed values are real.~&"
-                                    (bipole-struct-name bipole)
-                                    value))
+                        (when (integerp verbose)
+                          (when (> verbose 10)
+                            (printout :error
+                                      "bipole ~a no suitable inductance value ~a: allowed values are real.~&"
+                                      (bipole-struct-name bipole)
+                                      value)))
                         (setq ok? nil)
                         (return-from bipoles-loop))))
                  (:capacitance
                   (if (realp value)
                       (setq value (complex 0d0 (* 2d0 pi (problem-struct-frequency problem) value)))
                       (progn
-                        (when (and verbose-p
-                                   (> verbose 10))
-                          (printout :error
-                                    "bipole ~a no suitable capacitance value ~a: allowed values are real.~&"
-                                    (bipole-struct-name bipole)
-                                    value))
+                        (when (integerp verbose)
+                          (when (> verbose 10)
+                            (printout :error
+                                      "bipole ~a no suitable capacitance value ~a: allowed values are real.~&"
+                                      (bipole-struct-name bipole)
+                                      value)))
                         (setq ok? nil)
                         (return-from bipoles-loop))))
                  (:reactance
                   (if (realp value)
                       (setq value (/ 1d0 (complex 0d0 value)))
                       (progn
-                        (when (and verbose-p
-                                   (> verbose 10))
-                          (printout :error
-                                    "bipole ~a no suitable reactance value ~a: allowed values are real.~&"
-                                    (bipole-struct-name bipole)
-                                    value))
+                        (when (integerp verbose)
+                          (when (> verbose 10)
+                            (printout :error
+                                      "bipole ~a no suitable reactance value ~a: allowed values are real.~&"
+                                      (bipole-struct-name bipole)
+                                      value)))
                         (setq ok? nil)
                         (return-from bipoles-loop))))
                  (:impedance
                   (if (complexp value)
                       (setq value (/ 1d0 value))
                       (progn
-                        (when (and verbose-p
-                                   (> verbose 10))
-                          (printout :error
-                                    "bipole ~a no suitable impedance value ~a: allowed values are complex.~&"
-                                    (bipole-struct-name bipole)
-                                    value))
+                        (when (integerp verbose)
+                          (when (> verbose 10)
+                            (printout :error
+                                      "bipole ~a no suitable impedance value ~a: allowed values are complex.~&"
+                                      (bipole-struct-name bipole)
+                                      value)))
                         (setq ok? nil)
                         (return-from bipoles-loop))))
                  (:conductance
                   (if (realp value)
                       (setq value (complex value 0d0))
                       (progn
-                        (when (and verbose-p
-                                   (> verbose 10))
-                          (printout :error
-                                    "bipole ~a no suitable conductance value ~a: allowed values are real.~&"
-                                    (bipole-struct-name bipole)
-                                    value))
+                        (when (integerp verbose)
+                          (when (> verbose 10)
+                            (printout :error
+                                      "bipole ~a no suitable conductance value ~a: allowed values are real.~&"
+                                      (bipole-struct-name bipole)
+                                      value)))
                         (setq ok? nil)
                         (return-from bipoles-loop))))
                  (:susceptance
                   (if (realp value)
                       (setq value (complex 0d0 value))
                       (progn
-                        (when (and verbose-p
-                                   (> verbose 10))
-                          (printout :error
-                                    "bipole ~a no suitable susceptance value ~a: allowed values are real.~&"
-                                    (bipole-struct-name bipole)
-                                    value))
+                        (when (integerp verbose)
+                          (when (> verbose 10)
+                            (printout :error
+                                      "bipole ~a no suitable susceptance value ~a: allowed values are real.~&"
+                                      (bipole-struct-name bipole)
+                                      value)))
                         (setq ok? nil)
                         (return-from bipoles-loop))))
                  (:admittance
                   (if (complexp value)
                       ()
                       (progn
-                        (when (and verbose-p
-                                   (> verbose 10))
-                          (printout :error
-                                    "bipole ~a no suitable admittance value for ~a: allowed values are complex.~&"
-                                    (bipole-struct-name bipole)
-                                    value))
+                        (when (integerp verbose)
+                          (when (> verbose 10)
+                            (printout :error
+                                      "bipole ~a no suitable admittance value for ~a: allowed values are complex.~&"
+                                      (bipole-struct-name bipole)
+                                      value)))
                         (setq ok? nil)
                         (return-from bipoles-loop)))))
                (if (check-connection-nodes bipole)
@@ -674,25 +674,23 @@
                         (incf (grid:gref admittances-matrix (second nodes-numbers) (second nodes-numbers)) value))))
                    (progn
                      (setq ok? nil)
-                     (when (and verbose-p
-                                (> verbose 10))
-                       (printout :error
-                                 "bipole ~a has got wrong connection nodes ~s.~&"
-                                 (bipole-struct-name bipole)
-                                 (bipole-struct-nodes bipole)))
+                     (when (integerp verbose)
+                       (when (> verbose 10)
+                         (printout :error
+                                   "bipole ~a has got wrong connection nodes ~s.~&"
+                                   (bipole-struct-name bipole)
+                                   (bipole-struct-nodes bipole))))
                      (return-from bipoles-loop))))
              (progn
                (setq ok? nil)
-               (when (and verbose-p
-                          (> verbose 10))
-                 (printout :error
-                           "wrong value ~s for bipole ~a.~&"
-                           value
-                           (bipole-struct-name bipole)))
+               (when (integerp verbose)
+                 (when (> verbose 10)
+                   (printout :error
+                             "wrong value ~s for bipole ~a.~&"
+                             value
+                             (bipole-struct-name bipole))))
                (return-from bipoles-loop))))
-    (when (and verbose-p
-               (> verbose 10))
-      (printout :message "Y = ~s.~&" admittances-matrix)
+    (when (integerp verbose)
       (when (> verbose 5)
         (printout :message "exiting create-admittances-matrix().~%~%")))
     (values admittances-matrix
