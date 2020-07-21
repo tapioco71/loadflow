@@ -27,6 +27,7 @@
            #:bipole-struct
            #:bond-struct
            #:problem-struct
+           #:printout
            #:make-network-element
            #:make-node
            #:make-multipole
