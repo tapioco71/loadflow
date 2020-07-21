@@ -35,5 +35,17 @@
            #:make-bond
            #:make-problem
            #:load-problem
+           #:setup-problem
+           #:create-connection-matrices
+           #:create-vectors
+           #:create-admittances-matrix
+           #:create-jacobian-submatrices
+           #:assign-initial-solution
+           #:calculate-power-residuals
+           #:calculate-jacobian
+           #:solve-system
+           #:update-solution
+           #:check-power-tolerance
+           #:output-solution
            #:loadflow
            #:main))
