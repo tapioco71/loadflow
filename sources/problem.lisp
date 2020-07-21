@@ -216,9 +216,9 @@
     (check-type problem problem-struct))
   (when verbose-p
     (check-type verbose (or integer null)))
-  (when (and (integerp verbose)
-             (> verbose 5))
-    (printout :message "entering setup-problem().~&"))
+  (when (integerp verbose)
+    (when (> verbose 5)
+      (printout :message "entering setup-problem().~&")))
   (let ((return-value nil)
         (ok? nil))
     (loop
