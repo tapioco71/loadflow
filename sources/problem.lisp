@@ -216,7 +216,7 @@
     (check-type problem problem-struct))
   (when verbose-p
     (check-type verbose (or integer null)))
-  (when (and (numberp verbose)
+  (when (and (integerp verbose)
              (> verbose 5))
     (printout :message "entering setup-problem().~&"))
   (let ((return-value nil)
@@ -227,9 +227,9 @@
        do
          (case state
            (nodes-check
-            (when (and verbose-p
-                       (> verbose 10))
-              (printout :message "check nodes syntax.~&"))
+            (when (integerp verbose)
+              (when (> verbose 10)
+                (printout :message "check nodes syntax.~&")))
             (loop
                named nodes-check-loop
                for element in (problem-struct-network problem)
@@ -240,29 +240,29 @@
                    (node-struct
                     (case (node-struct-kind element)
                       ((or :load :generation :interconnection)
-                       (when (and verbose-p
-                                  (> verbose 10))
-                         (printout :message "adding node ~a of type ~a as number ~a.~&" (node-struct-name element) (node-struct-kind element) nodes-count))
+                       (when (integerp verbose)
+                         (when (> verbose 10)
+                           (printout :message "adding node ~a of type ~a as number ~a.~&" (node-struct-name element) (node-struct-kind element) nodes-count)))
                        (setf (node-struct-tag element) nodes-count)
                        (incf nodes-count))
                       (:reference
-                       (when (and verbose-p
-                                  (> verbose 10))
-                         (printout :message "adding node ~a as network reference.~&" (node-struct-name element)))
+                       (when (integerp verbose)
+                         (when (> verbose 10)
+                           (printout :message "adding node ~a as network reference.~&" (node-struct-name element))))
                        (setf (node-struct-tag element) nil)
                        (setq state 'elements-check))
                       (t
                        (setq state 'error-handling)
-                       (when (and verbose-p
-                                  (> verbose 10))
-                         (printout :error "node ~a unknow type ~s.~&" (node-struct-name element) (node-struct-kind element)))
+                       (when (integerp verbose)
+                         (when (> verbose 10)
+                           (printout :error "node ~a unknow type ~s.~&" (node-struct-name element) (node-struct-kind element))))
                        (return-from nodes-check-loop))))
                    (t
                     ()))))
            (elements-check
-            (when (and verbose-p
-                       (> verbose 10))
-              (printout :message "check elements syntax.~&"))
+            (when (integerp verbose)
+              (when (> verbose 10)
+                (printout :message "check elements syntax.~&")))
             (loop
                named elements-check-loop
                initially (setq state 'setup-return-values
@@ -271,9 +271,9 @@
                do
                  (typecase element
                    (bipole-struct
-                    (when (and (numberp verbose)
-                               (> verbose 10))
-                      (printout :message "adding bipole ~a of type ~s and nodes ~s.~&" (bipole-struct-name element) (bipole-struct-kind element) (bipole-struct-nodes element)))
+                    (when (integerp verbose)
+                      (when (> verbose 10)
+                        (printout :message "adding bipole ~a of type ~s and nodes ~s.~&" (bipole-struct-name element) (bipole-struct-kind element) (bipole-struct-nodes element))))
                     (if (= (length (bipole-struct-nodes element)) 2)
                         (loop
                            for node-name in (bipole-struct-nodes element)
@@ -287,28 +287,28 @@
                                (return-from elements-check-loop)))
                         (progn
                           (setq state 'error-handling)
-                          (when (and (numberp verbose)
-                                     (> verbose 10))
-                            (printout :error "bipole ~a hasn't got 2 connection nodes.~&" (bipole-struct-name element)))
+                          (when (integerp verbose)
+                            (when (> verbose 10)
+                              (printout :error "bipole ~a hasn't got 2 connection nodes.~&" (bipole-struct-name element))))
                           (return-from elements-check-loop))))
                    (multipole-struct
                     (setq state 'error-handling)
-                    (when (and (numberp verbose)
-                               (> verbose 10))
-                      (printout :error "multipoles are not implemented yet, check element named ~a.~&" (multipole-struct-name element)))
+                    (when (integer verbose)
+                      (when (> verbose 10)
+                        (printout :error "multipoles are not implemented yet, check element named ~a.~&" (multipole-struct-name element))))
                     (return-from elements-check-loop))
                    (node-struct
                     ())
                    (t
                     (setq state 'error-handling)
-                    (when (and (numberp verbose)
-                               (> verbose 10))
-                      (printout :error "unknown element ~s in the network.~&" element))
+                    (when (integerp verbose)
+                      (when (> verbose 10)
+                        (printout :error "unknown element ~s in the network.~&" element)))
                     (return-from elements-check-loop)))))
            (no-reference-node-error
-            (when (and (numberp verbose)
-                       (> verbose 10))
-              (printout :error "no reference node in the network.~&"))
+            (when (integerp verbose)
+              (when (> verbose 10)
+                (printout :error "no reference node in the network.~&")))
             (setq state 'error-handling))
            (error-handling
             (setq state 'exit-state-machine))
@@ -317,13 +317,13 @@
            (exit-state-machine
             (return-from state-machine-loop))
            (t
-            (when (and (numberp verbose)
-                       (> verbose 10))
-              (printout :error "unknown state ~s.~&" state))
+            (when (integerp verbose)
+              (when (> verbose 10)
+                (printout :error "unknown state ~s.~&" state)))
             (setq state 'error-handling))))
-    (when (and (numberp verbose)
-               (> verbose 10))
-      (printout :message "exiting setup-problem().~%~%"))
+    (when (integerp verbose)
+      (when (> verbose 5)
+        (printout :message "exiting setup-problem().~%~%")))
     ok?))
 
 (defun create-connection-matrices (&rest parameters &key
