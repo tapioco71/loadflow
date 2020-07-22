@@ -22,6 +22,7 @@
                   :maximum-iterations-count 10
                   :epsilon-power #c(20d3 20d3)
                   :frequency 50d0
+                  :comment "Exercise 5.4.4 pag. 347 - Impianti Elettrici Vol. 1 - Fabio Massimo Gatta"
                   :author "Angelo Rossi"
                   :date 3803983819
                   :network (#s(node-struct :name node-0

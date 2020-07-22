@@ -33,6 +33,7 @@
   (frequency nil :type (or real null))
   (threaded nil :type t)
   (author "" :type (or string null))
+  (comment "" :type (or string null))
   (date 0 :type (or (unsigned-byte 64) null))
   (date-modified 0 :type (or (unsigned-byte 64) null))
   (network nil :type list)
@@ -50,6 +51,7 @@
                                         (frequency 50d0 frequency-p)
                                         (threaded nil threaded-p)
                                         (author "" author-p)
+                                        (comment "" comment-p)
                                         (date (get-universal-time) date-p)
                                         (date-modified (get-universal-time) date-modified-p)
                                         (network nil network-p)
@@ -65,6 +67,7 @@
                       frequency
                       threaded
                       author
+                      comment
                       date
                       date-modified
                       network
@@ -84,6 +87,8 @@
     (check-type frequency (or real null)))
   (when author-p
     (check-type author (or string null)))
+  (when comment-p
+    (check-type comment (or string null)))
   (when date-p
     (check-type date (or (unsigned-byte 64) null)))
   (when date-modified-p
@@ -111,6 +116,7 @@
           (problem-struct-frequency object) frequency
           (problem-struct-threaded object) threaded
           (problem-struct-author object) author
+          (problem-struct-comment object) comment
           (problem-struct-date object) date
           (problem-struct-date-modified object) date-modified
           (problem-struct-network object) network
