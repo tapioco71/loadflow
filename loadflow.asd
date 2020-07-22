@@ -19,10 +19,10 @@
 ;;    along with Loadflow (LF).  If not, see <http://www.gnu.org/licenses/>.
 
 (asdf:defsystem #:loadflow
-  :description "Loadflow software"
+  :description "Loadflow software bound toward simplicity and efficiency."
   :author "Angelo Rossi <angelo.rossi.homelab@gmail.com>"
   :license  "GPLv3"
-  :version "0.0.1"
+  :version "1.0.1"
   :serial t
   :depends-on (#:gsll #:bordeaux-threads)
   :components ((:file "sources/package")
