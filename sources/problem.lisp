@@ -149,22 +149,22 @@
     (check-type problem-file-pathname pathname))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering load-problem().~&")))
+      (printout *standard-output* :message "entering load-problem().~&")))
   (let ((*package* (find-package 'loadflow))
         (data nil)
         (ok? nil))
     (with-open-file (s problem-file-pathname)
       (when (integerp verbose)
         (when (> verbose 10)
-          (printout :message "Loading problem file ~s~&" problem-file-pathname)))
+          (printout *standard-output* :message "Loading problem file ~s~&" problem-file-pathname)))
       (setq data (read s)
             ok? t))
     (when (integerp verbose)
       (when (> verbose 10)
-        (printout :message "problem = ~s.~&" data)))
+        (printout *standard-output* :message "problem = ~s.~&" data)))
     (when (integerp verbose)
       (when (> verbose 5)
-        (printout :message "exiting load-problem().~%~%")))
+        (printout *standard-output* :message "exiting load-problem().~%~%")))
     (values data
             ok?)))
 
@@ -180,20 +180,20 @@
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "get-input-data()~&")))
+      (printout *standard-output* :message "get-input-data()~&")))
   (multiple-value-bind (problem ok?)
       (load-problem :problem-file-pathname problem-file-pathname
                     :verbose verbose)
     (if ok?
         (when (integerp verbose)
           (when (> verbose 10)
-            (printout :message "problem ~a loaded.~&" (problem-struct-name problem))))
+            (printout *standard-output* :message "problem ~a loaded.~&" (problem-struct-name problem))))
         (when (integerp verbose)
           (when (> verbose 10)
-            (printout :error "could not load problem in file ~s.~&" problem-file-pathname))))
+            (printout *standard-output* :error "could not load problem in file ~s.~&" problem-file-pathname))))
     (when (integerp verbose)
       (when (> verbose 5)
-        (printout :message "exiting get-input-data().~%~%")))
+        (printout *standard-output* :message "exiting get-input-data().~%~%")))
     (values problem
             ok?)))
 
@@ -224,7 +224,7 @@
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering setup-problem().~&")))
+      (printout *standard-output* :message "entering setup-problem().~&")))
   (let ((return-value nil)
         (ok? nil))
     (loop
@@ -235,7 +235,7 @@
            (nodes-check
             (when (integerp verbose)
               (when (> verbose 10)
-                (printout :message "check nodes syntax.~&")))
+                (printout *standard-output* :message "check nodes syntax.~&")))
             (loop
                named nodes-check-loop
                for element in (problem-struct-network problem)
@@ -248,27 +248,27 @@
                       ((or :load :generation :interconnection)
                        (when (integerp verbose)
                          (when (> verbose 10)
-                           (printout :message "adding node ~a of type ~a as number ~a.~&" (node-struct-name element) (node-struct-kind element) nodes-count)))
+                           (printout *standard-output* :message "adding node ~a of type ~a as number ~a.~&" (node-struct-name element) (node-struct-kind element) nodes-count)))
                        (setf (node-struct-tag element) nodes-count)
                        (incf nodes-count))
                       (:reference
                        (when (integerp verbose)
                          (when (> verbose 10)
-                           (printout :message "adding node ~a as network reference.~&" (node-struct-name element))))
+                           (printout *standard-output* :message "adding node ~a as network reference.~&" (node-struct-name element))))
                        (setf (node-struct-tag element) nil)
                        (setq state 'elements-check))
                       (t
                        (setq state 'error-handling)
                        (when (integerp verbose)
                          (when (> verbose 10)
-                           (printout :error "node ~a unknow type ~s.~&" (node-struct-name element) (node-struct-kind element))))
+                           (printout *standard-output* :error "node ~a unknow type ~s.~&" (node-struct-name element) (node-struct-kind element))))
                        (return-from nodes-check-loop))))
                    (t
                     ()))))
            (elements-check
             (when (integerp verbose)
               (when (> verbose 10)
-                (printout :message "check elements syntax.~&")))
+                (printout *standard-output* :message "check elements syntax.~&")))
             (loop
                named elements-check-loop
                initially (setq state 'setup-return-values
@@ -279,7 +279,7 @@
                    (bipole-struct
                     (when (integerp verbose)
                       (when (> verbose 10)
-                        (printout :message "adding bipole ~a of type ~s and nodes ~s.~&" (bipole-struct-name element) (bipole-struct-kind element) (bipole-struct-nodes element))))
+                        (printout *standard-output* :message "adding bipole ~a of type ~s and nodes ~s.~&" (bipole-struct-name element) (bipole-struct-kind element) (bipole-struct-nodes element))))
                     (if (= (length (bipole-struct-nodes element)) 2)
                         (loop
                            for node-name in (bipole-struct-nodes element)
@@ -289,19 +289,19 @@
                                (setq state 'error-handling)
                                (when (integerp verbose)
                                  (when (> verbose 10)
-                                   (printout :error "in bipole ~a no node named ~a in the network.~&" (bipole-struct-name element) node-name)))
+                                   (printout *standard-output* :error "in bipole ~a no node named ~a in the network.~&" (bipole-struct-name element) node-name)))
                                (return-from elements-check-loop)))
                         (progn
                           (setq state 'error-handling)
                           (when (integerp verbose)
                             (when (> verbose 10)
-                              (printout :error "bipole ~a hasn't got 2 connection nodes.~&" (bipole-struct-name element))))
+                              (printout *standard-output* :error "bipole ~a hasn't got 2 connection nodes.~&" (bipole-struct-name element))))
                           (return-from elements-check-loop))))
                    (multipole-struct
                     (setq state 'error-handling)
                     (when (integer verbose)
                       (when (> verbose 10)
-                        (printout :error "multipoles are not implemented yet, check element named ~a.~&" (multipole-struct-name element))))
+                        (printout *standard-output* :error "multipoles are not implemented yet, check element named ~a.~&" (multipole-struct-name element))))
                     (return-from elements-check-loop))
                    (node-struct
                     ())
@@ -309,12 +309,12 @@
                     (setq state 'error-handling)
                     (when (integerp verbose)
                       (when (> verbose 10)
-                        (printout :error "unknown element ~s in the network.~&" element)))
+                        (printout *standard-output* :error "unknown element ~s in the network.~&" element)))
                     (return-from elements-check-loop)))))
            (no-reference-node-error
             (when (integerp verbose)
               (when (> verbose 10)
-                (printout :error "no reference node in the network.~&")))
+                (printout *standard-output* :error "no reference node in the network.~&")))
             (setq state 'error-handling))
            (error-handling
             (setq state 'exit-state-machine))
@@ -325,11 +325,11 @@
            (t
             (when (integerp verbose)
               (when (> verbose 10)
-                (printout :error "unknown state ~s.~&" state)))
+                (printout *standard-output* :error "unknown state ~s.~&" state)))
             (setq state 'error-handling))))
     (when (integerp verbose)
       (when (> verbose 5)
-        (printout :message "exiting setup-problem().~%~%")))
+        (printout *standard-output* :message "exiting setup-problem().~%~%")))
     ok?))
 
 (defun create-connection-matrices (&rest parameters &key
@@ -346,7 +346,7 @@
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering create-connection-matrices().~&")))
+      (printout *standard-output* :message "entering create-connection-matrices().~&")))
   (let* ((nodes-count (1- (count-elements :problem problem
                                           :typename 'node-struct)))
          (temp-cv-matrix (make-array (list 0 0) :element-type 'double-float :initial-element 0d0 :adjustable t))
@@ -388,7 +388,8 @@
                  (setq ok? nil)
                  (when (integerp verbose)
                    (when (> verbose 10)
-                     (printout :error
+                     (printout *standard-output*
+                               :error
                                "bond ~a unknown kind ~a for generation node ~a.~&"
                                (bond-struct-name (node-struct-bond node))
                                (bond-struct-kind (node-struct-bond node))
@@ -414,7 +415,8 @@
                  (setq ok? nil)
                  (when (integerp verbose)
                    (when (> verbose 10)
-                     (printout :error
+                     (printout *standard-output*
+                               :error
                                "bond ~a unknown kind ~a for load node ~a.~&"
                                (bond-struct-name (node-struct-bond node))
                                (bond-struct-kind (node-struct-bond node))
@@ -437,11 +439,11 @@
             ctheta-matrix (grid:copy-to temp-ctheta-matrix 'grid:foreign-array))
       (when (integerp verbose)
         (when (> verbose 10)
-          (printout :message "Cv = ~s, dim(Cv) = ~s.~&" cv-matrix (grid:dimensions cv-matrix))
-          (printout :message "Ctheta = ~s, dim(Cv) = ~s.~&" ctheta-matrix (grid:dimensions ctheta-matrix))))
+          (printout *standard-output* :message "Cv = ~s, dim(Cv) = ~s.~&" cv-matrix (grid:dimensions cv-matrix))
+          (printout *standard-output* :message "Ctheta = ~s, dim(Cv) = ~s.~&" ctheta-matrix (grid:dimensions ctheta-matrix))))
       (when (integerp verbose)
         (when (> verbose 5)
-          (printout :message "exiting create-connection-matrices().~%~%")))
+          (printout *standard-output* :message "exiting create-connection-matrices().~%~%")))
       (values cv-matrix
               ctheta-matrix
               ok?))))
@@ -459,7 +461,7 @@
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering create-vectors().~&")))
+      (printout *standard-output* :message "entering create-vectors().~&")))
   (let ((order (1- (count-if #'(lambda (x)
                                  (typep x 'node-struct))
                              (problem-struct-network problem))))
@@ -493,16 +495,16 @@
                 ok? t)
           (when (integerp verbose)
             (when (> verbose 10)
-              (printout :message "voltages vector = ~s, dim(V) = ~a.~&" voltages-vector (grid:dimensions voltages-vector))
-              (printout :message "thetas vector = ~s, dim(theta) = ~a.~&" thetas-vector (grid:dimensions thetas-vector))
-              (printout :message "delta-p vector = ~s, dim(delta-p) = ~a.~&" delta-p-vector (grid:dimensions delta-p-vector))
-              (printout :message "delta-q vector = ~s, dim(delta-q) = ~a.~&" delta-q-vector (grid:dimensions delta-q-vector)))))
+              (printout *standard-output* :message "voltages vector = ~s, dim(V) = ~a.~&" voltages-vector (grid:dimensions voltages-vector))
+              (printout *standard-output* :message "thetas vector = ~s, dim(theta) = ~a.~&" thetas-vector (grid:dimensions thetas-vector))
+              (printout *standard-output* :message "delta-p vector = ~s, dim(delta-p) = ~a.~&" delta-p-vector (grid:dimensions delta-p-vector))
+              (printout *standard-output* :message "delta-q vector = ~s, dim(delta-q) = ~a.~&" delta-q-vector (grid:dimensions delta-q-vector)))))
         (when (integerp verbose)
           (when (> verbose 10)
-            (printout :error "vectors order <= 0.~&"))))
+            (printout *standard-output* :error "vectors order <= 0.~&"))))
     (when (integerp verbose)
       (when (> verbose 5)
-        (printout :message "exiting create-vectors().~%~%")))
+        (printout *standard-output* :message "exiting create-vectors().~%~%")))
     (values voltages-vector
             thetas-vector
             p-vector
@@ -524,7 +526,7 @@
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering create admittances matrix().~&")))
+      (printout *standard-output* :message "entering create admittances matrix().~&")))
   (let* ((order (1- (count-elements :problem problem
                                     :typename 'node-struct)))
          (admittances-matrix (grid:make-foreign-array '(complex double-float)
@@ -546,7 +548,7 @@
        do
          (when (integerp verbose)
            (when (> verbose 10)
-             (printout :message "bipole ~s.~&" bipole)))
+             (printout *standard-output* :message "bipole ~s.~&" bipole)))
          (setq value (getf (bipole-struct-model-parameters bipole) :value))
          (if value
              (progn
@@ -557,7 +559,8 @@
                       (progn
                         (when (integerp verbose)
                           (when (> verbose 10)
-                            (printout :error
+                            (printout *standard-output*
+                                      :error
                                       "bipole ~a no suitable resistance value ~a: allowed values are real.~&"
                                       (bipole-struct-name bipole)
                                       value)))
@@ -571,7 +574,8 @@
                       (progn
                         (when (integerp verbose)
                           (when (> verbose 10)
-                            (printout :error
+                            (printout *standard-output*
+                                      :error
                                       "bipole ~a no suitable inductance value ~a: allowed values are real.~&"
                                       (bipole-struct-name bipole)
                                       value)))
@@ -583,7 +587,8 @@
                       (progn
                         (when (integerp verbose)
                           (when (> verbose 10)
-                            (printout :error
+                            (printout *standard-output*
+                                      :error
                                       "bipole ~a no suitable capacitance value ~a: allowed values are real.~&"
                                       (bipole-struct-name bipole)
                                       value)))
@@ -595,7 +600,8 @@
                       (progn
                         (when (integerp verbose)
                           (when (> verbose 10)
-                            (printout :error
+                            (printout *standard-output*
+                                      :error
                                       "bipole ~a no suitable reactance value ~a: allowed values are real.~&"
                                       (bipole-struct-name bipole)
                                       value)))
@@ -607,7 +613,8 @@
                       (progn
                         (when (integerp verbose)
                           (when (> verbose 10)
-                            (printout :error
+                            (printout *standard-output*
+                                      :error
                                       "bipole ~a no suitable impedance value ~a: allowed values are complex.~&"
                                       (bipole-struct-name bipole)
                                       value)))
@@ -619,7 +626,8 @@
                       (progn
                         (when (integerp verbose)
                           (when (> verbose 10)
-                            (printout :error
+                            (printout *standard-output*
+                                      :error
                                       "bipole ~a no suitable conductance value ~a: allowed values are real.~&"
                                       (bipole-struct-name bipole)
                                       value)))
@@ -631,7 +639,8 @@
                       (progn
                         (when (integerp verbose)
                           (when (> verbose 10)
-                            (printout :error
+                            (printout *standard-output*
+                                      :error
                                       "bipole ~a no suitable susceptance value ~a: allowed values are real.~&"
                                       (bipole-struct-name bipole)
                                       value)))
@@ -643,7 +652,8 @@
                       (progn
                         (when (integerp verbose)
                           (when (> verbose 10)
-                            (printout :error
+                            (printout *standard-output*
+                                      :error
                                       "bipole ~a no suitable admittance value for ~a: allowed values are complex.~&"
                                       (bipole-struct-name bipole)
                                       value)))
@@ -668,7 +678,7 @@
                                 (setq ok? nil)
                                 (when (integerp verbose)
                                   (when (> verbose 10)
-                                    (printout :error "no node named ~a.~&" node-name)))
+                                    (printout *standard-output* :error "no node named ~a.~&" node-name)))
                                 (return-from bipoles-loop))))
                      (case (length nodes-numbers)
                        (1
@@ -682,7 +692,8 @@
                      (setq ok? nil)
                      (when (integerp verbose)
                        (when (> verbose 10)
-                         (printout :error
+                         (printout *standard-output*
+                                   :error
                                    "bipole ~a has got wrong connection nodes ~s.~&"
                                    (bipole-struct-name bipole)
                                    (bipole-struct-nodes bipole))))
@@ -691,14 +702,15 @@
                (setq ok? nil)
                (when (integerp verbose)
                  (when (> verbose 10)
-                   (printout :error
+                   (printout *standard-output*
+                             :error
                              "wrong value ~s for bipole ~a.~&"
                              value
                              (bipole-struct-name bipole))))
                (return-from bipoles-loop))))
     (when (integerp verbose)
       (when (> verbose 5)
-        (printout :message "exiting create-admittances-matrix().~%~%")))
+        (printout *standard-output* :message "exiting create-admittances-matrix().~%~%")))
     (values admittances-matrix
             ok?)))
 
@@ -717,7 +729,7 @@
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering count-power-nodes().~&")))
+      (printout *standard-output* :message "entering count-power-nodes().~&")))
   (let ((p-nodes-count 0)
         (q-nodes-count 0))
     (loop
@@ -727,7 +739,7 @@
            (:generation
             (when (integerp verbose)
               (when (> verbose 10)
-                (printout :message "generation node ~a bond type ~s.~&" (node-struct-name node) (node-struct-bond node))))
+                (printout *standard-output* :message "generation node ~a bond type ~s.~&" (node-struct-name node) (node-struct-bond node))))
             (case (bond-struct-kind (node-struct-bond node))
               (:p-v
                (incf p-nodes-count))
@@ -741,7 +753,7 @@
            (:load
             (when (integerp verbose)
               (when (> verbose 10)
-                (printout :message "load node ~a bond type ~s.~&" (node-struct-name node) (node-struct-bond node))))
+                (printout *standard-output* :message "load node ~a bond type ~s.~&" (node-struct-name node) (node-struct-bond node))))
             (case (bond-struct-kind (node-struct-bond node))
               (:p-q
                (incf p-nodes-count)
@@ -749,15 +761,15 @@
            (:interconnection
             (when (integerp verbose)
               (when (> verbose 10)
-                (printout :message "interconnection node ~a.~&" (node-struct-name node))))
+                (printout *standard-output* :message "interconnection node ~a.~&" (node-struct-name node))))
             (incf p-nodes-count)
             (incf q-nodes-count))))
     (when (integerp verbose)
       (when (> verbose 10)
-        (printout :message "P nodes count = ~a, Q nodes count = ~a.~&" p-nodes-count q-nodes-count)))
+        (printout *standard-output* :message "P nodes count = ~a, Q nodes count = ~a.~&" p-nodes-count q-nodes-count)))
     (when (integerp verbose)
       (when (> verbose 5)
-        (printout :message "exiting count-power-nodes().~%~%")))
+        (printout *standard-output* :message "exiting count-power-nodes().~%~%")))
     (values p-nodes-count q-nodes-count)))
 
 (defun create-jacobian-submatrices (&rest parameters &key
@@ -772,7 +784,7 @@
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering create-jacobian-submatrices().~&")))
+      (printout *standard-output* :message "entering create-jacobian-submatrices().~&")))
   (let ((nodes (remove-if-not #'(lambda (x)
                                   (typep x 'node-struct))
                               (problem-struct-network problem)))
@@ -802,13 +814,13 @@
                                                           :initial-element 0d0))
               (when (integerp verbose)
                 (when (> verbose 10)
-                  (printout :message "could not create the Jacobian matrix.~&")))))
+                  (printout *standard-output* :message "could not create the Jacobian matrix.~&")))))
         (when (integerp verbose)
           (when (> verbose 10)
-            (printout :message "no nodes in the network.~&"))))
+            (printout *standard-output* :message "no nodes in the network.~&"))))
     (when (integerp verbose)
       (when (> verbose 5)
-        (printout :message "exiting create-jacobian-submatrices().~%~%")))
+        (printout *standard-output* :message "exiting create-jacobian-submatrices().~%~%")))
     (values dp/dtheta-matrix
             dq/dtheta-matrix
             dp/dv-matrix

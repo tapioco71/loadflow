@@ -26,36 +26,37 @@
 
 ;; Functions.
 
-(defun printout (mode message &rest parameters)
+(defun printout (s mode message &rest parameters)
   "Print into the right output stream message for the three categories :message
    :error and :results."
+  (check-type s stream)
   (assert (member mode *message-types* :test #'equalp))
   (check-type message string)
   (let ((format-parameters (case mode
                              (:message
                               (concatenate 'list
-                                           (list *standard-output*
+                                           (list s
                                                  (concatenate 'string
                                                               "--> "
                                                               message))
                                            parameters))
                              (:warning
                               (concatenate 'list
-                                           (list *standard-output*
+                                           (list s
                                                  (concatenate 'string
                                                               "WARNING: "
                                                               message))
                                            parameters))
                              (:error
                               (concatenate 'list
-                                           (list *error-output*
+                                           (list s
                                                  (concatenate 'string
                                                               "ERROR: "
                                                               message))
                                            parameters))
                              (:results
                               (concatenate 'list
-                                           (list *standard-output*
+                                           (list s
                                                  "RESULTS: ~s~&")
                                            parameters))
                              (t
@@ -63,4 +64,4 @@
     (when format-parameters
       (apply #'format
              format-parameters)
-      (finish-output *standard-output*))))
+      (finish-output s))))

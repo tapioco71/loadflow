@@ -46,7 +46,7 @@
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering assign-initial-solution().~&")))
+      (printout *standard-output* :message "entering assign-initial-solution().~&")))
   (let ((ok? nil))
     (loop
        named nodes-loop
@@ -58,12 +58,14 @@
               (:p-v ;; Q and theta unknown - |V| value is in bond-struct :voltage-magnitude and initial value for theta is in :data
                (when (integerp verbose)
                  (when (> verbose 10)
-                   (printout :message
+                   (printout *standard-output*
+                             :message
                              "node ~a (~a) applying voltage magnitude bond as initial value: ~s.~&"
                              (node-struct-name node)
                              (node-struct-tag node)
                              (node-struct-bond node))
-                   (printout :message
+                   (printout *standard-output*
+                             :message
                              "node ~a (~a) applying voltage phase initial value: ~s.~&"
                              (node-struct-name node)
                              (node-struct-tag node)
@@ -74,12 +76,14 @@
               (:q-v ;; P and theta unknown - |V| value is in bond-struct :voltage-magnitude and initial value for theta is in :data
                (when (integerp verbose)
                  (when (> verbose 10)
-                   (printout :message
+                   (printout *standard-output*
+                             :message
                              "node ~a (~a) applying voltage magnitude bond as initial value: ~s.~&"
                              (node-struct-name node)
                              (node-struct-tag node)
                              (node-struct-bond node))
-                   (printout :message
+                   (printout *standard-output*
+                             :message
                              "node ~a (~a) applying voltage phase initial value: ~s.~&"
                              (node-struct-name node)
                              (node-struct-tag node)
@@ -90,7 +94,8 @@
               (:p-q ;; |V| and theta unknown - initial values for |V| and theta are in :data
                (when (integerp verbose)
                  (when (> verbose 10)
-                   (printout :message
+                   (printout *standard-output*
+                             :message
                              "node ~a (~a) applying voltage phasor initial value: ~s.~&"
                              (node-struct-name node)
                              (node-struct-tag node)
@@ -101,7 +106,8 @@
               (:v-theta ;; P and Q unknown - |V| and arg(V) values are in bond-struct :voltage-magnitude and :voltage-phase
                (when (integerp verbose)
                  (when (> verbose 10)
-                   (printout :message
+                   (printout *standard-output*
+                             :message
                              "node ~a (~a) applying voltage phasor bond as initial value: ~s.~&"
                              (node-struct-name node)
                              (node-struct-tag node)
@@ -114,7 +120,8 @@
               (:p-q ;; |e| and theta unknown - initial values for |e| and theta are in :data
                (when (integerp verbose)
                  (when (> verbose 10)
-                   (printout :message
+                   (printout *standard-output*
+                             :message
                              "node ~a (~a) applying voltage phasor initial value: ~s.~&"
                              (node-struct-name node)
                              (node-struct-tag node)
@@ -129,7 +136,8 @@
            (:interconnection
             (when (integerp verbose)
               (when (> verbose 10)
-                (printout :message
+                (printout *standard-output*
+                          :message
                           "node ~a (~a) applying voltage phasor initial value: ~s.~&"
                           (node-struct-name node)
                           (node-struct-tag node)
@@ -139,11 +147,11 @@
             (setq ok? t))))
     (when (integerp verbose)
       (when (> verbose 10)
-        (printout :message "initial voltages vector = ~s.~&" voltages-vector)
-        (printout :message "initial thetas vector = ~s.~&" thetas-vector)))
+        (printout *standard-output* :message "initial voltages vector = ~s.~&" voltages-vector)
+        (printout *standard-output* :message "initial thetas vector = ~s.~&" thetas-vector)))
     (when (integerp verbose)
       (when (> verbose 5)
-        (printout :message "exiting assign-initial-solution().~%~%")))
+        (printout *standard-output* :message "exiting assign-initial-solution().~%~%")))
     (values voltages-vector
             thetas-vector
             ok?)))
@@ -188,7 +196,7 @@
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering calculate-power-residuals().~&")))
+      (printout *standard-output* :message "entering calculate-power-residuals().~&")))
   (let ((ok? nil))
     (handler-case
         (labels ((nodal-active-power (k v theta y)
@@ -298,13 +306,13 @@
           (when ok?
             (when (integerp verbose)
               (when (> verbose 10)
-                (printout :message "P = ~a.~&" p-vector)
-                (printout :message "Q = ~a.~&" q-vector)
-                (printout :message "delta-P = ~s.~&" delta-p-vector)
-                (printout :message "delta-Q = ~s.~&" delta-q-vector))))
+                (printout *standard-output* :message "P = ~a.~&" p-vector)
+                (printout *standard-output* :message "Q = ~a.~&" q-vector)
+                (printout *standard-output* :message "delta-P = ~s.~&" delta-p-vector)
+                (printout *standard-output* :message "delta-Q = ~s.~&" delta-q-vector))))
           (when (integerp verbose)
             (when (> verbose 5)
-              (printout :message "exiting calculate-power-residuals().~%~%"))))
+              (printout *standard-output* :message "exiting calculate-power-residuals().~%~%"))))
       (error (e)
         (setq ok? nil)))
     (values p-vector
@@ -353,7 +361,7 @@
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering calculate-jacobian().~&")))
+      (printout *standard-output* :message "entering calculate-jacobian().~&")))
   (let ((nodes (extract-nodes problem))
         (jacobian-threads nil)
         (jacobian-matrix nil)
@@ -436,7 +444,7 @@
              (update-dp/dtheta-matrix (m v theta y)
                (when (integerp verbose)
                  (when (> verbose 5)
-                   (printout :message "entering update-dp/dtheta-matrix().~&")))
+                   (printout *standard-output* :message "entering update-dp/dtheta-matrix().~&")))
                (loop
                   with node-a = nil
                   with row = 0
@@ -476,11 +484,11 @@
                         (incf row))))
                (when (integerp verbose)
                  (when (> verbose 5)
-                   (printout :message "exiting update-dp/dtheta-matrix().~&~&"))))
+                   (printout *standard-output* :message "exiting update-dp/dtheta-matrix().~&~&"))))
              (update-dq/dtheta-matrix (m v theta y)
                (when (integerp verbose)
                  (when (> verbose 5)
-                   (printout :message "entering update-dq/dtheta-matrix().~&")))
+                   (printout *standard-output* :message "entering update-dq/dtheta-matrix().~&")))
                (loop
                   with node-a = nil
                   with row = 0
@@ -520,11 +528,11 @@
                         (incf row))))
                (when (integerp verbose)
                  (when (> verbose 5)
-                   (printout :message "exiting update-dq/dtheta-matrix().~&"))))
+                   (printout *standard-output* :message "exiting update-dq/dtheta-matrix().~&"))))
              (update-dq/dv-matrix (m v theta y)
                (when (integerp verbose)
                  (when (> verbose 5)
-                   (printout :message "entering update-dq/dv-matrix().~&")))
+                   (printout *standard-output* :message "entering update-dq/dv-matrix().~&")))
                (loop
                   with node-a = nil
                   with row = 0
@@ -560,11 +568,11 @@
                         (incf row))))
                (when (integerp verbose)
                  (when (> verbose 5)
-                   (printout :message "exiting update-dq/dv-matrix().~&"))))
+                   (printout *standard-output* :message "exiting update-dq/dv-matrix().~&"))))
              (update-dp/dv-matrix (m v theta y)
                (when (integerp verbose)
                  (when (> verbose 5)
-                   (printout :message "entering update-dp/dv-matrix().~&")))
+                   (printout *standard-output* :message "entering update-dp/dv-matrix().~&")))
                (loop
                   with node-a = nil
                   with row = 0
@@ -600,12 +608,12 @@
                         (incf row))))
                (when (integerp verbose)
                  (when (> verbose 5)
-                   (printout :message "exiting update-dp/dv-matrix().~&")))))
+                   (printout *standard-output* :message "exiting update-dp/dv-matrix().~&")))))
       (if (problem-struct-threaded problem)
           (progn
             (when (integerp verbose)
               (when (> verbose 10)
-                (printout :message "using threads to compute Jacobian.~&")))
+                (printout *standard-output* :message "using threads to compute Jacobian.~&")))
             (setq jacobian-threads (list (bt:make-thread #'(lambda ()
                                                              (update-dp/dtheta-matrix dp/dtheta-matrix
                                                                                       (grid:copy voltages-vector)
@@ -637,13 +645,14 @@
                     while (bt:thread-alive-p thread))
                  (when (integerp verbose)
                    (when (> verbose 10)
-                     (printout :message
+                     (printout *standard-output*
+                               :message
                                "thread ~s finished.~&"
                                (bt:thread-name thread))))))
           (progn
             (when (integerp verbose)
               (when (> verbose 10)
-                (printout :message "sequentially computing Jacobian.~&")))
+                (printout *standard-output* :message "sequentially computing Jacobian.~&")))
             (update-dp/dtheta-matrix dp/dtheta-matrix
                                      (grid:copy voltages-vector)
                                      (grid:copy thetas-vector)
@@ -672,18 +681,18 @@
             (setq ok? t)
             (when (integerp verbose)
               (when (> verbose 10)
-                (printout :message "dp/dtheta = ~s~&" dp/dtheta-matrix)
-                (printout :message "dq/dtheta = ~s~&" dq/dtheta-matrix)
-                (printout :message "dp/dv = ~s~&" dp/dv-matrix)
-                (printout :message "dq/dv = ~s~&" dq/dv-matrix)
-                (printout :message "Jacobian = ~s.~&" jacobian-matrix))))
+                (printout *standard-output* :message "dp/dtheta = ~s~&" dp/dtheta-matrix)
+                (printout *standard-output* :message "dq/dtheta = ~s~&" dq/dtheta-matrix)
+                (printout *standard-output* :message "dp/dv = ~s~&" dp/dv-matrix)
+                (printout *standard-output* :message "dq/dv = ~s~&" dq/dv-matrix)
+                (printout *standard-output* :message "Jacobian = ~s.~&" jacobian-matrix))))
           (progn
             (when (integerp verbose)
               (when (> verbose 10)
-                (prinout :error "could not calculate Jacobian matrix.~&")))))
+                (prinout *standard-output* :error "could not calculate Jacobian matrix.~&")))))
       (when (integerp verbose)
         (when (> verbose 5)
-          (printout :message "exiting calculate-jacobian().~%~%")))
+          (printout *standard-output* :message "exiting calculate-jacobian().~%~%")))
       (values jacobian-matrix ok?))))
 
 (defun calculate-currents (&rest parameters &key
@@ -711,7 +720,7 @@
     (check-type q-vector grid:foreign-array))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering calculate-currents().~&")))
+      (printout *standard-output* :message "entering calculate-currents().~&")))
   (let ((nodes (extract-nodes problem))
         (bipoles (extract-bipoles problem))
         (current nil)
@@ -738,7 +747,7 @@
                      bond-currents)
                (when (integerp verbose)
                  (when (> verbose 10)
-                   (printout :message "Generation P-E bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))
+                   (printout *standard-output* :message "Generation P-E bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))
               (:q-v
                (setq bond-current (->phasor (/ (conjugate (complex (grid:gref p-vector (node-struct-tag node))
                                                                    (bond-struct-reactive-power (node-struct-bond node))))
@@ -750,7 +759,7 @@
                      bond-currents)
                (when (integerp verbose)
                  (when (> verbose 10)
-                   (printout :message "Generation Q-E bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))
+                   (printout *standard-output* :message "Generation Q-E bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))
               (:p-q
                (setq bond-current (->phasor (/ (conjugate (complex (bond-struct-active-power (node-struct-bond node))
                                                                    (bond-struct-reactive-power (node-struct-bond node))))
@@ -762,7 +771,7 @@
                      bond-currents)
                (when (integerp verbose)
                  (when (> verbose 10)
-                   (printout :message "Generation P-Q bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))
+                   (printout *standard-output* :message "Generation P-Q bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))
               (:v-theta
                (push (list :bond-name (bond-struct-name (node-struct-bond node))
                            :current (->phasor (/ (conjugate (complex (grid:gref p-vector (node-struct-tag node))
@@ -773,7 +782,7 @@
                      bond-currents)
                (when (integerp verbose)
                  (when (> verbose 10)
-                   (printout :message "Generation V-theta bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))))
+                   (printout *standard-output* :message "Generation V-theta bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))))
            (:load
             (case (bond-struct-kind (node-struct-bond node))
               (:p-q
@@ -787,7 +796,7 @@
                      bond-currents)
                (when (integerp verbose)
                  (when (> verbose 10)
-                   (printout :message "Load P-Q bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))))))
+                   (printout *standard-output* :message "Load P-Q bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))))))
     (when ok?
       (loop
          named bipoles-loop
@@ -820,7 +829,8 @@
                                   (t
                                    (when (integerp verbose)
                                      (when (> verbose 10)
-                                       (printout :error
+                                       (printout *standard-output*
+                                                 :error
                                                  "bipole ~a wrong number of nodes (~a).~&"
                                                  (bipole-struct-name bipole)
                                                  (length nodes-numbers))))
@@ -852,7 +862,8 @@
                  currents)
            (when (integerp verbose)
              (when (> verbose 10)
-               (printout :message
+               (printout *standard-output*
+                         :message
                          "~a(~{~a~^, ~}) voltage across = ~s, current ~s~%"
                          (bipole-struct-name bipole)
                          nodes-numbers
@@ -860,7 +871,7 @@
                          current)))))
     (when (integerp verbose)
       (when (> verbose 5)
-        (printout :message "exiting calculate-currents().~%~%")))
+        (printout *standard-output* :message "exiting calculate-currents().~%~%")))
     (values currents
             bond-currents
             ok?)))
@@ -911,7 +922,7 @@
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering solve-system().~&")))
+      (printout *standard-output* :message "entering solve-system().~&")))
   (let* ((order (grid:dim0 jacobian-matrix))
          (x-vector nil)
          (y-vector (grid:concatenate-grids (gsll:matrix-product (grid:copy ctheta-matrix)
@@ -924,7 +935,8 @@
          (ok? nil))
     (when (integerp verbose)
       (when (> verbose 10)
-        (printout :message
+        (printout *standard-output*
+                  :message
                   "y = ~s, dim(s) = ~s.~&"
                   y-vector
                   (grid:dimensions y-vector))))
@@ -950,7 +962,8 @@
                      do
                        (when (integerp verbose)
                          (when (> verbose 10)
-                           (printout :error
+                           (printout *standard-output*
+                                     :error
                                      "Solution element is not a number x(~a)!~&"
                                      i)))
                        (setq ok? nil)
@@ -958,11 +971,13 @@
                   (when ok?
                     (when (integerp verbose)
                       (when (> verbose 10)
-                        (printout :message
+                        (printout *standard-output*
+                                  :message
                                   "x = ~s, dim(s) = ~s.~&"
                                   x-vector
                                   (grid:dimensions x-vector))
-                        (printout :message
+                        (printout *standard-output*
+                                  :message
                                   "permutation = ~s.~&"
                                   permutation)))
                     (setq delta-thetas (gsll:matrix-product (grid:transpose (grid:copy ctheta-matrix))
@@ -973,16 +988,16 @@
                   (setq ok? nil)
                   (when (integerp verbose)
                     (when (> verbose 10)
-                      (printout :error "no solution.~&")))))))
+                      (printout *standard-output* :error "no solution.~&")))))))
       (error (e)
         (setq ok? nil)))
     (when (integerp verbose)
       (when (> verbose 10)
-        (printout :message "delta-voltages = ~s.~&" delta-voltages)
-        (printout :message "delta-thetas = ~s.~&" delta-thetas)))
+        (printout *standard-output* :message "delta-voltages = ~s.~&" delta-voltages)
+        (printout *standard-output* :message "delta-thetas = ~s.~&" delta-thetas)))
     (when (integerp verbose)
       (when (> verbose 5)
-        (printout :message "exiting solve-system().~%~%")))
+        (printout *standard-output* :message "exiting solve-system().~%~%")))
     (values delta-thetas
             delta-voltages
             ok?)))
@@ -1019,7 +1034,7 @@
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering update-solution().~&")))
+      (printout *standard-output* :message "entering update-solution().~&")))
   (let ((ok? nil))
     (loop
        named nodes-loop
@@ -1057,11 +1072,11 @@
                                                                       (grid:gref delta-thetas-vector (node-struct-tag node)))))))
     (when (integerp verbose)
       (when (> verbose 10)
-        (printout :message "voltages vector = ~s.~&" voltages-vector)
-        (printout :message "thetas vector = ~s.~&" thetas-vector)))
+        (printout *standard-output* :message "voltages vector = ~s.~&" voltages-vector)
+        (printout *standard-output* :message "thetas vector = ~s.~&" thetas-vector)))
     (when (integerp verbose)
       (when (> verbose 5)
-        (printout :message "exiting update-solution().~%~%")))
+        (printout *standard-output* :message "exiting update-solution().~%~%")))
     ok?))
 
 (defun check-power-tolerance (&rest parameters &key
@@ -1094,7 +1109,7 @@
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering check-power-tollerance().~&")))
+      (printout *standard-output* :message "entering check-power-tollerance().~&")))
   (let ((ok? nil))
     (loop
        named nodes-loop
@@ -1106,7 +1121,8 @@
                    (realpart (problem-struct-epsilon-power problem)))
            (when (integerp verbose)
              (when (> verbose 10)
-               (printout :message
+               (printout *standard-output*
+                         :message
                          "active power is over the selected tolerance |~a| > ~a.~&"
                          (grid:gref delta-p-vector (node-struct-tag node))
                          (realpart (problem-struct-epsilon-power problem)))))
@@ -1115,7 +1131,8 @@
                    (imagpart (problem-struct-epsilon-power problem)))
            (when (integerp verbose)
              (when (> verbose 10)
-               (printout :message
+               (printout *standard-output*
+                         :message
                          "reactive power is over the selected tolerance |~a| > ~a.~&"
                          (grid:gref delta-q-vector (node-struct-tag node))
                          (imagpart (problem-struct-epsilon-power problem)))))
@@ -1123,10 +1140,10 @@
     (when ok?
       (when (integerp verbose)
         (when (> verbose 10)
-          (printout :message "power requirements met.~&"))))
+          (printout *standard-output* :message "power requirements met.~&"))))
     (when (integerp verbose)
       (when (> verbose 5)
-        (printout :message "exiting check-power-tollerance().~%~%")))
+        (printout *standard-output* :message "exiting check-power-tollerance().~%~%")))
     ok?))
 
 (defun output-solution (&rest parameters &key
@@ -1136,6 +1153,7 @@
                                            (p-vector nil p-vector-p)
                                            (q-vector nil q-vector-p)
                                            (iterations-count nil iterations-count-p)
+                                           (stream-object *standard-output* stream-object-p)
                                            (verbose nil verbose-p))
   (declare (ignorable parameters
                       problem
@@ -1144,6 +1162,7 @@
                       p-vector
                       q-vector
                       iterations-count
+                      stream-object
                       verbose))
   (when problem-p
     (check-type problem problem-struct))
@@ -1157,11 +1176,13 @@
     (check-type q-vector grid:foreign-array))
   (when iterations-count-p
     (check-type iterations-count (unsigned-byte 64)))
+  (when stream-object-p
+    (check-type stream-object stream))
   (when verbose-p
     (check-type verbose (or integer null)))
   (when (integerp verbose)
     (when (> verbose 5)
-      (printout :message "entering output-solution().~&")))
+      (printout *standard-output* :message "entering output-solution().~&")))
   (let ((voltages (make-array (grid:dim0 voltages-vector) :element-type 'phasor-struct :initial-element (make-phasor))))
     (loop
        for i from 0 below (grid:dim0 voltages-vector)
@@ -1190,15 +1211,15 @@
             (when (integerp verbose)
               (when (> verbose 10)
                 (progn
-                  (printout :message "Voltages = ~s~%" voltages)
-                  (printout :message "Currents = ~s~%" currents)
-                  (printout :message "Bond Currents = ~s~%" bond-currents)))))
+                  (printout *standard-output* :message "Voltages = ~s~%" voltages)
+                  (printout *standard-output* :message "Currents = ~s~%" currents)
+                  (printout *standard-output* :message "Bond Currents = ~s~%" bond-currents)))))
           (when (integerp verbose)
             (when (> verbose 10)
-              (printout :error "could not calculate currents.~&"))))
+              (printout *standard-output* :error "could not calculate currents.~&"))))
       (when (integerp verbose)
         (when (> verbose 5)
-          (printout :message "exiting output-solution().~%~%")))
+          (printout *standard-output* :message "exiting output-solution().~%~%")))
       (values (problem-struct-solution problem)
               ok?))))
 
@@ -1214,7 +1235,7 @@
     (check-type verbose (or integer null)))
   (when (and verbose-p
              (> verbose 5))
-    (printout :message "entering loadflow().~&"))
+    (printout *standard-output* :message "entering loadflow().~&"))
   (let ((problem nil)
         (cv-matrix nil)
         (ctheta-matrix nil)
@@ -1250,7 +1271,7 @@
                   (setq state 'exit-with-error)
                   (when (integerp verbose) ;; input data is not ok.
                     (when (> integerp 10)
-                      (printout :error "could not read problem ~s.~&" problem-file-pathname))))))
+                      (printout *standard-output* :error "could not read problem ~s.~&" problem-file-pathname))))))
            (setup-problem
             (if (setup-problem :problem problem
                                :verbose verbose)
@@ -1258,7 +1279,7 @@
                 (progn
                   (when (integerp verbose) ;; setup of data is not ok.
                     (when (> verbose 10)
-                      (printout :error "could not setup problem ~a.~&" (problem-struct-name problem))))
+                      (printout *standard-output* :error "could not setup problem ~a.~&" (problem-struct-name problem))))
                   (setq state 'exit-with-error))))
            (create-connection-matrices
             (multiple-value-setq (cv-matrix ctheta-matrix ok?)
@@ -1269,7 +1290,7 @@
                 (progn
                   (when (integerp verbose) ;; connection matrices are not created.
                     (when (> verbose 10)
-                      (printout :error "could not create connection matrices.~&")))
+                      (printout *standard-output* :error "could not create connection matrices.~&")))
                   (setq state 'exit-with-error))))
            (create-vectors
             (multiple-value-setq (voltages-vector thetas-vector p-vector q-vector delta-p-vector delta-q-vector ok?)
@@ -1280,7 +1301,7 @@
                 (progn
                   (when (integerp verbose) ;; vectors were not created.
                     (when (> verbose 10)
-                      (printout :error "could not create vectors.~&")))
+                      (printout *standard-output* :error "could not create vectors.~&")))
                   (setq state 'exit-with-error))))
            (create-admittances-matrix
             (multiple-value-setq (admittances-matrix ok?)
@@ -1291,7 +1312,7 @@
                 (progn
                   (when (integerp verbose) ;; admittances matrix was not created.
                     (when (> verbose 10)
-                      (printout :error "could no create the admittances matrix.~&")))
+                      (printout *standard-output* :error "could no create the admittances matrix.~&")))
                   (setq state 'exit-with-error))))
            (create-jacobian-submatrices
             (multiple-value-setq (dp/dtheta-matrix dq/dtheta-matrix dp/dv-matrix dq/dv-matrix ok?)
@@ -1302,7 +1323,7 @@
                 (progn
                   (when (integerp verbose) ;; Jacobian submatrices were not created.
                     (when (> verbose 10)
-                      (printout :error "could not create the Jacobian matrix.~&")))
+                      (printout *standard-output* :error "could not create the Jacobian matrix.~&")))
                   (setq state 'exit-with-error))))
            (assign-initial-solution
             (multiple-value-setq (voltages-vector thetas-vector ok?)
@@ -1315,12 +1336,12 @@
                 (progn
                   (when (integerp verbose) ;; initial solution not assigned.
                     (when (> verbose 10)
-                      (printout :error "could not assign an initial solution.~&")))
+                      (printout *standard-output* :error "could not assign an initial solution.~&")))
                   (setq state 'exit-with-error))))
            (main-loop
             (when (integerp verbose)
               (when (> verbose 10)
-                (printout :message "entering main loop.~%~%")))
+                (printout *standard-output* :message "entering main loop.~%~%")))
             (setq state 'first-time-calculate-power-residuals))
            (first-time-calculate-power-residuals
             (multiple-value-setq (p-vector q-vector delta-p-vector delta-q-vector ok?)
@@ -1338,12 +1359,12 @@
                 (progn
                   (when (integerp verbose)
                     (when (> verbose 10)
-                      (printout :error "could not compute initial power residuals values.~&")))
+                      (printout *standard-output* :error "could not compute initial power residuals values.~&")))
                   (setq state 'exit-with-error))))
            (solving-loop-setup
             (when (integerp verbose)
               (when (> verbose 10)
-                (printout :message "entering solving loop.~%~%")))
+                (printout *standard-output* :message "entering solving loop.~%~%")))
             (setq iteration 1
                   state 'solving-loop))
            (solving-loop
@@ -1351,12 +1372,12 @@
                 (progn
                   (when (integerp verbose)
                     (when (> verbose 10)
-                      (printout :error "maximum iterations count reached (~a). No solution.~&" (problem-struct-maximum-iterations-count problem))))
+                      (printout *standard-output* :error "maximum iterations count reached (~a). No solution.~&" (problem-struct-maximum-iterations-count problem))))
                   (setq state 'exit-with-error))
                 (progn
                   (when (integerp verbose)
                     (when (> verbose 10)
-                      (printout :message "iteration #~a~%~%" iteration)))
+                      (printout *standard-output* :message "iteration #~a~%~%" iteration)))
                   (setq state 'calculate-jacobian-matrix))))
            (calculate-jacobian-matrix
             (multiple-value-setq (jacobian-matrix ok?)
@@ -1374,7 +1395,7 @@
                 (progn
                   (when (integerp verbose)
                     (when (> verbose 10)
-                      (printout :error "could not calculate Jacobian matrix.~&")))
+                      (printout *standard-output* :error "could not calculate Jacobian matrix.~&")))
                   (setq state 'exit-with-error))))
            (solve-system
             (multiple-value-setq (delta-thetas-vector delta-voltages-vector ok?)
@@ -1389,7 +1410,7 @@
                 (progn
                   (when (integerp verbose)
                     (when (> verbose 10)
-                      (printout :error "could not solve system.~&")))
+                      (printout *standard-output* :error "could not solve system.~&")))
                   (setq state 'exit-with-error))))
            (update-solution
             (if (update-solution :problem problem
@@ -1404,7 +1425,7 @@
                 (progn
                   (when (integerp verbose)
                     (when (> verbose 10)
-                      (printout :error "could not update solution.~&")))
+                      (printout *standard-output* :error "could not update solution.~&")))
                   (setq state 'exit-with-error))))
            (calculate-power-residuals
             (multiple-value-setq (p-vector q-vector delta-p-vector delta-q-vector ok?)
@@ -1422,7 +1443,7 @@
                 (progn
                   (when (integerp verbose)
                     (when (> verbose 10)
-                      (printout :error "could not compute power residuals.~&")))
+                      (printout *standard-output* :error "could not compute power residuals.~&")))
                   (setq state 'exit-with-error))))
            (check-power-tolerance
             (if (check-power-tolerance :problem problem
@@ -1450,7 +1471,7 @@
                   (progn
                     (when (integerp verbose)
                       (when (> verbose 10)
-                        (printout :error "could not output solution.~&")))
+                        (printout *standard-output* :error "could not output solution.~&")))
                     (setq state 'exit-with-error))))))
            (exit
             (setq ok? t)
