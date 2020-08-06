@@ -20,11 +20,12 @@
 
 #s(problem-struct :name "test-problem-15"
                   :maximum-iterations-count 10
-                  :epsilon-power #c(10d3 20d3)
+                  :epsilon-power #c(5d3 20d3)
                   :frequency 50d0
                   :comment "Exercise 5.4.4 pag. 347 - Impianti Elettrici Vol. 1 - Fabio Massimo Gatta"
                   :author "Angelo Rossi"
                   :date 3803983819
+                  :date-modified 3805688014
                   :network (#s(node-struct :name node-0
                                            :kind :reference)
                             #s(node-struct :name node-1
