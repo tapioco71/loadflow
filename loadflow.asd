@@ -34,4 +34,5 @@
                (:file "sources/node")
                (:file "sources/multipole")
                (:file "sources/problem")
+               (:file "sources/utilities")
                (:file "sources/loadflow")))

@@ -1183,12 +1183,14 @@
   (when (integerp verbose)
     (when (> verbose 5)
       (printout stream-object :message "entering output-solution().~&")))
-  (let ((voltages (make-array (grid:dim0 voltages-vector) :element-type 'phasor-struct :initial-element (make-phasor))))
-    (loop
-       for i from 0 below (grid:dim0 voltages-vector)
-       do
-         (setf (aref voltages i) (make-phasor :magnitude (grid:gref voltages-vector i)
-                                              :argument (grid:gref thetas-vector i))))
+  (let* ((nodes (remove-if-not #'(lambda (x)
+                                  (typep x 'node-struct))
+                              (problem-struct-network problem)))
+        (voltages (loop
+                    for i from 0 below (grid:dim0 voltages-vector)
+                    collect (list :node-name (node-struct-name (nth (1+ i) nodes))
+                                  :magnitude (grid:gref voltages-vector i)
+                                  :argument (grid:gref thetas-vector i)))))
     (multiple-value-bind (currents bond-currents ok?)
         (calculate-currents :problem problem
                             :voltages-vector voltages-vector

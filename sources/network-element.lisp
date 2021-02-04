@@ -68,12 +68,14 @@
 
 (defun where (&rest parameters &key
                                  (name nil name-p)
-                                 (kind nil kind-p))
+                                 (kind nil kind-p)
+                                 (tag nil tag-p))
   "Return a closure which test for different combinations of
    keys the argument."
   (declare (ignorable parameters
                       name
-                      kind))
+                      kind
+                      tag))
   (when name-p
     (check-type name (or symbol string (unsigned-byte 64) null)))
   (when kind-p
@@ -84,4 +86,7 @@
                t)
            (if kind-p
                (equalp (network-element-struct-kind x) kind)
+               t)
+           (if tag-p
+               (= (node-struct-tag x) tag)
                t))))
