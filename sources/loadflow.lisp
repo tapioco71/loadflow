@@ -1186,11 +1186,25 @@
   (let* ((nodes (remove-if-not #'(lambda (x)
                                   (typep x 'node-struct))
                               (problem-struct-network problem)))
-        (voltages (loop
-                    for i from 0 below (grid:dim0 voltages-vector)
-                    collect (list :node-name (node-struct-name (nth (1+ i) nodes))
-                                  :magnitude (grid:gref voltages-vector i)
-                                  :argument (grid:gref thetas-vector i)))))
+         (voltages nil)
+         (powers nil))
+    (multiple-value-setq (powers voltages)
+      (loop
+        with node-name = nil
+        for i from 0 below (grid:dim0 p-vector)
+        do
+           (setq node-name (node-struct-name (find-if #'(lambda (x)
+                                                          (eql (node-struct-tag x) i))
+                                                      nodes)))
+        collect (list :node-name
+                      :magnitude (grid:gref voltages-vector i)
+                      :argument (grid:gref thetas-vector i))
+          into voltages
+        collect (list :node-name
+                      :active-power (grid:gref p-vector i)
+                      :reactive-power (grid:gref q-vector i))
+          into powers
+        finally (return (values powers voltages))))
     (multiple-value-bind (currents bond-currents ok?)
         (calculate-currents :problem problem
                             :voltages-vector voltages-vector
@@ -1200,12 +1214,7 @@
                             :verbose verbose)
       (if ok?
           (progn
-            (setf (problem-struct-solution problem) (list (list :powers (loop
-                                                                           for i from 0 below (grid:dim0 p-vector)
-                                                                           collect (make-phasor :magnitude (abs (complex (grid:gref p-vector i)
-                                                                                                                         (grid:gref q-vector i)))
-                                                                                                :argument (atan (grid:gref q-vector i)
-                                                                                                                (grid:gref p-vector i)))))
+            (setf (problem-struct-solution problem) (list (list :powers powers)
                                                           (list :voltages voltages)
                                                           (list :currents currents)
                                                           (list :bond-currents bond-currents)

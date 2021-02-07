@@ -88,8 +88,7 @@
           (line-struct-conductor-cross-sections object) conductor-cross-sections)
     object))
 
-                         
-(defun make-line-model (&rest parameters &key
+(defun make-line-pi-model (&rest parameters &key
                                            (line nil line-p)
                                            (frequency 50d0 frequency-p))
   "Create a line model."
@@ -230,7 +229,7 @@
                                      :nodes (list 0 2)
                                      :model-function #'(lambda ())
                                      :model-parameters (list :value (/ cs 2d0))))))))))
-                        
+
 
 ;; Utilities
 
@@ -242,10 +241,10 @@
                     (all-permutations (rest lst)))
             (all-permutations (append (rest lst) (list (first lst))) (rest remain))))))
 
-(defun combinations (a) 
+(defun combinations (a)
   (let ((return-value nil))
-    (loop 
-      for i from 0 below (length a) 
+    (loop
+      for i from 0 below (length a)
       do
          (loop
            for j from i below (length a)
@@ -258,7 +257,7 @@
     (setq x (pop a))
     (when x
       (append a (list x)))))
-    
+
 (defun matrix-trace (a)
   (check-type a grid:foreign-array)
   (assert (= (length (grid:dimensions a)) 2))
@@ -268,3 +267,5 @@
       for i from 0 below (grid:dim0 a)
       sum (grid:gref a i i) into tr
       finally (return tr))))
+
+;; Macros.
