@@ -88,5 +88,5 @@
                (equalp (network-element-struct-kind x) kind)
                t)
            (if tag-p
-               (= (node-struct-tag x) tag)
+               (equalp (node-struct-tag x) tag)
                t))))

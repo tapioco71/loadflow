@@ -1192,9 +1192,8 @@
         with node-name = nil
         for i from 0 below (grid:dim0 p-vector)
         do
-           (setq node-name (node-struct-name (find-if #'(lambda (x)
-                                                          (eql (node-struct-tag x) i))
-                                                      nodes)))
+           (setq node-name (node-struct-name (first (select-element :predicate (where :tag i)
+                                                                    :elements nodes))))
         collect (list :node-name node-name
                       :magnitude (grid:gref voltages-vector i)
                       :argument (grid:gref thetas-vector i))
