@@ -1196,11 +1196,11 @@
            (setq node-name (node-struct-name (find-if #'(lambda (x)
                                                           (eql (node-struct-tag x) i))
                                                       nodes)))
-        collect (list :node-name
+        collect (list :node-name node-name
                       :magnitude (grid:gref voltages-vector i)
                       :argument (grid:gref thetas-vector i))
           into voltages
-        collect (list :node-name
+        collect (list :node-name node-name
                       :active-power (grid:gref p-vector i)
                       :reactive-power (grid:gref q-vector i))
           into powers
@@ -1231,8 +1231,7 @@
       (when (integerp verbose)
         (when (> verbose 5)
           (printout stream-object :message "exiting output-solution().~%~%")))
-      (values (problem-struct-solution problem)
-              ok?))))
+      (values (problem-struct-solution problem) ok?))))
 
 (defun loadflow (&rest parameters &key
                                     (problem-file-pathname nil problem-file-pathname-p)
@@ -1478,12 +1477,12 @@
                   (progn
                     (setf (problem-struct-solution problem) solution
                           return-value problem)
-                    (setq state 'exit)
+                    (setq state 'exit))
                   (progn
                     (when (integerp verbose)
                       (when (> verbose 10)
                         (printout *standard-output* :error "could not output solution.~&")))
-                    (setq state 'exit-with-error))))))
+                    (setq state 'exit-with-error)))))
            (exit
             (setq ok? t)
             (return-from state-machine-loop))
