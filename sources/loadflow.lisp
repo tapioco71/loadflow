@@ -200,23 +200,23 @@
   (let ((ok? nil))
     (handler-case
         (labels ((nodal-active-power (k v theta y)
-                   (* (abs (grid:gref v k))
-                      (loop
-                        for i from 0 below (grid:dim0 v)
-                        sum (* (abs (grid:gref v i))
-                               (abs (grid:gref y k i))
-                               (cos (- (grid:gref theta k)
-                                       (grid:gref theta i)
-                                       (phase (grid:gref y k i))))))))
+                   (loop
+                     for i from 0 below (grid:dim0 v)
+                     sum (* (abs (grid:gref v k))
+                            (abs (grid:gref v i))
+                            (abs (grid:gref y k i))
+                            (cos (- (grid:gref theta k)
+                                    (grid:gref theta i)
+                                    (phase (grid:gref y k i)))))))
                  (nodal-reactive-power (k v theta y)
-                   (* (abs (grid:gref v k))
-                      (loop
-                        for i from 0 below (grid:dim0 v)
-                        sum (* (abs (grid:gref v i))
-                               (abs (grid:gref y k i))
-                               (sin (- (grid:gref theta k)
-                                       (grid:gref theta i)
-                                       (phase (grid:gref y k i)))))))))
+                   (loop
+                     for i from 0 below (grid:dim0 v)
+                     sum (* (abs (grid:gref v k))
+                            (abs (grid:gref v i))
+                            (abs (grid:gref y k i))
+                            (sin (- (grid:gref theta k)
+                                    (grid:gref theta i)
+                                    (phase (grid:gref y k i))))))))
           (loop
             initially (setq ok? t)
             named nodes-loop
