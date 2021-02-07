@@ -169,8 +169,7 @@
         (values data
                 ok?))
     (file-error (e)
-      (when verbose
-        (printout *standard-output* :error "could not load ~a" problem-file-pathname)))))
+      (error 'load-file-error :file-pathname problem-file-pathname))))
 
 (defun count-elements (&rest parameters &key
                                           (problem nil problem-p)

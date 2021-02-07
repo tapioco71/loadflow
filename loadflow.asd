@@ -26,6 +26,7 @@
   :serial t
   :depends-on (#:gsll #:bordeaux-threads)
   :components ((:file "sources/package")
+               (:file "sources/conditions")
                (:file "sources/message")
                (:file "sources/electrical")
                (:file "sources/model")

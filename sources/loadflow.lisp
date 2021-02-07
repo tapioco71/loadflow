@@ -1232,11 +1232,14 @@
       (values (problem-struct-solution problem) ok?))))
 
 (defun loadflow (&rest parameters &key
+                                    (problem nil problem-p)
                                     (problem-file-pathname nil problem-file-pathname-p)
                                     (verbose nil verbose-p))
   (declare (ignorable parameters
                       problem-file-pathname
                       verbose))
+  (when (and problem-p problem-file-pathname)
+    (error 'wrong-parameters-error :parameters (list problem problem-file-pathname)))
   (when problem-file-pathname-p
     (check-type problem-file-pathname pathname))
   (when verbose-p
@@ -1281,9 +1284,7 @@
                                :verbose verbose)
                 (setq state 'create-connection-matrices)
                 (progn
-                  (when (integerp verbose) ;; setup of data is not ok.
-                    (when (> verbose 10)
-                      (printout *standard-output* :error "could not setup problem ~a.~&" (problem-struct-name problem))))
+                  (error 'problem-setup-error :problem-name (problem-struct-name problem))
                   (setq state 'exit-with-error))))
            (create-connection-matrices
             (multiple-value-setq (cv-matrix ctheta-matrix ok?)

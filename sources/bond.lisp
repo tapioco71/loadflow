@@ -36,6 +36,7 @@
   (reactive-power nil :type (or real null))
   (voltage-magnitude nil :type (or real null))
   (voltage-phase nil :type (or real null))
+  (load-factor nil :type (or real null))
   (model nil :type (or model-struct null)))
 
 ;; Functions.
