@@ -45,7 +45,7 @@
   (when verbose-p
     (check-type verbose (or integer null)))
   (when (integerp verbose)
-    (when (> verbose 5)
+    (when (> verbose 20)
       (printout *standard-output* :message "entering assign-initial-solution().~&")))
   (let ((ok? nil))
     (loop
@@ -150,7 +150,7 @@
         (printout *standard-output* :message "initial voltages vector = ~s.~&" voltages-vector)
         (printout *standard-output* :message "initial thetas vector = ~s.~&" thetas-vector)))
     (when (integerp verbose)
-      (when (> verbose 5)
+      (when (> verbose 20)
         (printout *standard-output* :message "exiting assign-initial-solution().~%~%")))
     (values voltages-vector
             thetas-vector
@@ -1180,7 +1180,7 @@
   (when verbose-p
     (check-type verbose (or integer null)))
   (when (integerp verbose)
-    (when (> verbose 5)
+    (when (> verbose 10)
       (printout stream-object :message "entering output-solution().~&")))
   (let* ((nodes (remove-if-not #'(lambda (x)
                                   (typep x 'node-struct))
