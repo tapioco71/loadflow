@@ -20,7 +20,7 @@
 
 #s(problem-struct :name "test-problem-15"
                   :maximum-iterations-count 10
-                  :epsilon-power #c(5d3 20d3)
+                  :epsilon-power #c(1d3 20d3)
                   :frequency 50d0
                   :comment "Exercise 5.4.4 pag. 347 - Impianti Elettrici Vol. 1 - Fabio Massimo Gatta"
                   :author "Angelo Rossi"
