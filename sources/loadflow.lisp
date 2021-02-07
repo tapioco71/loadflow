@@ -1271,15 +1271,11 @@
             (setq state 'get-input-data))
            (get-input-data
             (multiple-value-setq (problem ok?)
-              (get-input-data :problem-file-pathname problem-file-pathname
-                              :verbose verbose))
+              (load-problem :problem-file-pathname problem-file-pathname
+                            :verbose verbose))
             (if ok? ;; is input data ok?
                 (setq state 'setup-problem)
-                (progn
-                  (setq state 'exit-with-error)
-                  (when (integerp verbose) ;; input data is not ok.
-                    (when (> integerp 10)
-                      (printout *standard-output* :error "could not read problem ~s.~&" problem-file-pathname))))))
+                (setq state 'exit-with-error)))
            (setup-problem
             (if (setup-problem :problem problem
                                :verbose verbose)

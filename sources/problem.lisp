@@ -148,54 +148,29 @@
   (when problem-file-pathname-p
     (check-type problem-file-pathname pathname))
   (when (integerp verbose)
-    (when (> verbose 5)
+    (when (> verbose 20)
       (printout *standard-output* :message "entering load-problem().~&")))
-  (let ((*package* (find-package 'loadflow))
-        (data nil)
-        (ok? nil))
-    (with-open-file (s problem-file-pathname)
-      (when (integerp verbose)
-        (when (> verbose 10)
-          (printout *standard-output* :message "Loading problem file ~s~&" problem-file-pathname)))
-      (setq data (read s)
-            ok? t))
-    (when (integerp verbose)
-      (when (> verbose 10)
-        (printout *standard-output* :message "problem = ~s.~&" data)))
-    (when (integerp verbose)
-      (when (> verbose 5)
-        (printout *standard-output* :message "exiting load-problem().~%~%")))
-    (values data
-            ok?)))
-
-(defun get-input-data (&rest parameters &key
-                                          (problem-file-pathname nil problem-file-pathname-p)
-                                          (verbose nil verbose-p))
-  (declare (ignorable parameters
-                      problem-file-pathname
-                      verbose))
-  (when problem-file-pathname-p
-    (check-type problem-file-pathname pathname))
-  (when verbose-p
-    (check-type verbose (or integer null)))
-  (when (integerp verbose)
-    (when (> verbose 5)
-      (printout *standard-output* :message "get-input-data()~&")))
-  (multiple-value-bind (problem ok?)
-      (load-problem :problem-file-pathname problem-file-pathname
-                    :verbose verbose)
-    (if ok?
+  (handler-case
+      (let ((*package* (find-package 'loadflow))
+            (data nil)
+            (ok? nil))
+        (with-open-file (s problem-file-pathname)
+          (when (integerp verbose)
+            (when (> verbose 10)
+              (printout *standard-output* :message "Loading problem file ~s~&" problem-file-pathname)))
+          (setq data (read s)
+                ok? t))
         (when (integerp verbose)
-          (when (> verbose 10)
-            (printout *standard-output* :message "problem ~a loaded.~&" (problem-struct-name problem))))
+          (when (> verbose 20)
+            (printout *standard-output* :message "problem = ~s.~&" data)))
         (when (integerp verbose)
-          (when (> verbose 10)
-            (printout *standard-output* :error "could not load problem in file ~s.~&" problem-file-pathname))))
-    (when (integerp verbose)
-      (when (> verbose 5)
-        (printout *standard-output* :message "exiting get-input-data().~%~%")))
-    (values problem
-            ok?)))
+          (when (> verbose 20)
+            (printout *standard-output* :message "exiting load-problem().~%~%")))
+        (values data
+                ok?))
+    (file-error (e)
+      (when verbose
+        (printout *standard-output* :error "could not load ~a" problem-file-pathname)))))
 
 (defun count-elements (&rest parameters &key
                                           (problem nil problem-p)
