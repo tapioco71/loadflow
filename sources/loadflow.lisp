@@ -406,16 +406,16 @@
                    (loop
                       for i from 0 below (grid:dim0 v)
                       if (/= i k)
-                      sum (* (abs (grid:gref v i))
-                             (abs (grid:gref y k i))
-                             (cos (- (grid:gref theta k)
-                                     (grid:gref theta i)
-                                     (phase (grid:gref y k i)))))
+                        sum (* (abs (grid:gref v i))
+                               (abs (grid:gref y k i))
+                               (cos (- (grid:gref theta k)
+                                       (grid:gref theta i)
+                                       (phase (grid:gref y k i)))))
                       else
-                      sum (* 2d0
-                             (abs (grid:gref v k))
-                             (abs (grid:gref y k k))
-                             (cos (- (phase (grid:gref y k k))))))
+                        sum (* 2d0
+                              (abs (grid:gref v k))
+                              (abs (grid:gref y k k))
+                              (cos (- (phase (grid:gref y k k))))))
                    (* (grid:gref v k)
                       (abs (grid:gref y k h))
                       (cos (- (grid:gref theta k)
@@ -426,16 +426,16 @@
                    (loop
                       for i from 0 below (grid:dim0 v)
                       if (/= i k)
-                      sum (* (abs (grid:gref v i))
-                             (abs (grid:gref y k i))
-                             (sin (- (grid:gref theta k)
-                                     (grid:gref theta i)
-                                     (phase (grid:gref y k i)))))
+                        sum (* (abs (grid:gref v i))
+                               (abs (grid:gref y k i))
+                               (sin (- (grid:gref theta k)
+                                       (grid:gref theta i)
+                                       (phase (grid:gref y k i)))))
                       else
-                      sum (- (* 2d0
-                                (abs (grid:gref v k))
-                                (abs (grid:gref y k k))
-                                (sin (phase (grid:gref y k k))))))
+                        sum (* -2d0
+                               (abs (grid:gref v k))
+                               (abs (grid:gref y k k))
+                               (sin (phase (grid:gref y k k)))))
                    (* (abs (grid:gref v k))
                       (abs (grid:gref y k h))
                       (sin (- (grid:gref theta k)
