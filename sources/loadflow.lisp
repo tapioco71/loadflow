@@ -49,9 +49,9 @@
       (printout *standard-output* :message "entering assign-initial-solution().~&")))
   (let ((ok? nil))
     (loop
-       named nodes-loop
-       for node in (extract-nodes problem)
-       do
+      named nodes-loop
+      for node in (extract-nodes problem)
+      do
          (case (node-struct-kind node)
            (:generation
             (case (bond-struct-kind (node-struct-bond node))
@@ -130,9 +130,9 @@
                      (grid:gref thetas-vector (node-struct-tag node)) (getf (node-struct-data node) :voltage-phase))
                (setq ok? t))
               (:v=f(Q)
-                   (setf (grid:gref voltages-vector (node-struct-tag node)) (getf (node-struct-data node) :voltage-magnitude)
-                         (grid:gref thetas-vector (node-struct-tag node)) (getf (node-struct-data node) :voltage-phase))
-                   (setq ok? t))))
+               (setf (grid:gref voltages-vector (node-struct-tag node)) (getf (node-struct-data node) :voltage-magnitude)
+                     (grid:gref thetas-vector (node-struct-tag node)) (getf (node-struct-data node) :voltage-phase))
+               (setq ok? t))))
            (:interconnection
             (when (integerp verbose)
               (when (> verbose 10)
@@ -202,105 +202,105 @@
         (labels ((nodal-active-power (k v theta y)
                    (* (abs (grid:gref v k))
                       (loop
-                         for i from 0 below (grid:dim0 v)
-                         sum (* (abs (grid:gref v i))
-                                (abs (grid:gref y k i))
-                                (cos (- (grid:gref theta k)
-                                        (grid:gref theta i)
-                                        (phase (grid:gref y k i))))))))
+                        for i from 0 below (grid:dim0 v)
+                        sum (* (abs (grid:gref v i))
+                               (abs (grid:gref y k i))
+                               (cos (- (grid:gref theta k)
+                                       (grid:gref theta i)
+                                       (phase (grid:gref y k i))))))))
                  (nodal-reactive-power (k v theta y)
                    (* (abs (grid:gref v k))
                       (loop
-                         for i from 0 below (grid:dim0 v)
-                         sum (* (abs (grid:gref v i))
-                                (abs (grid:gref y k i))
-                                (sin (- (grid:gref theta k)
-                                        (grid:gref theta i)
-                                        (phase (grid:gref y k i)))))))))
+                        for i from 0 below (grid:dim0 v)
+                        sum (* (abs (grid:gref v i))
+                               (abs (grid:gref y k i))
+                               (sin (- (grid:gref theta k)
+                                       (grid:gref theta i)
+                                       (phase (grid:gref y k i)))))))))
           (loop
-             initially (setq ok? t)
-             named nodes-loop
-             for node in (remove-if-not #'(lambda (x)
-                                            (typep x 'node-struct))
-                                        (problem-struct-network problem))
-             do
+            initially (setq ok? t)
+            named nodes-loop
+            for node in (remove-if-not #'(lambda (x)
+                                           (typep x 'node-struct))
+                                       (problem-struct-network problem))
+            do
                (case (node-struct-kind node)
                  (:generation
                   (case (bond-struct-kind (node-struct-bond node))
                     (:p-v
                      (setf (grid:gref p-vector (node-struct-tag node)) (nodal-active-power (node-struct-tag node)
-                                                                                voltages-vector
-                                                                                thetas-vector
-                                                                                admittances-matrix)
+                                                                                           voltages-vector
+                                                                                           thetas-vector
+                                                                                           admittances-matrix)
                            (grid:gref q-vector (node-struct-tag node)) (nodal-reactive-power (node-struct-tag node)
-                                                                                  voltages-vector
-                                                                                  thetas-vector
-                                                                                  admittances-matrix)
+                                                                                             voltages-vector
+                                                                                             thetas-vector
+                                                                                             admittances-matrix)
                            (grid:gref delta-p-vector (node-struct-tag node)) (- (bond-struct-active-power (node-struct-bond node))
-                                                                     (grid:gref p-vector (node-struct-tag node)))
+                                                                                (grid:gref p-vector (node-struct-tag node)))
                            (grid:gref delta-q-vector (node-struct-tag node)) 0d0))
                     (:q-v
                      (setf (grid:gref p-vector (node-struct-tag node)) (nodal-active-power (node-struct-tag node)
-                                                                                voltages-vector
-                                                                                thetas-vector
-                                                                                admittances-matrix)
+                                                                                           voltages-vector
+                                                                                           thetas-vector
+                                                                                           admittances-matrix)
                            (grid:gref q-vector (node-struct-tag node)) (nodal-reactive-power (node-struct-tag node)
-                                                                                  voltages-vector
-                                                                                  thetas-vector
-                                                                                  admittances-matrix)
+                                                                                             voltages-vector
+                                                                                             thetas-vector
+                                                                                             admittances-matrix)
                            (grid:gref delta-p-vector (node-struct-tag node)) 0d0
                            (grid:gref delta-q-vector (node-struct-tag node)) (- (bond-struct-reactive-power (node-struct-bond node))
-                                                                     (grid:gref q-vector (node-struct-tag node)))))
+                                                                                (grid:gref q-vector (node-struct-tag node)))))
                     (:p-q
                      (setf (grid:gref p-vector (node-struct-tag node)) (nodal-active-power (node-struct-tag node)
-                                                                                voltages-vector
-                                                                                thetas-vector
-                                                                                admittances-matrix)
+                                                                                           voltages-vector
+                                                                                           thetas-vector
+                                                                                           admittances-matrix)
                            (grid:gref q-vector (node-struct-tag node)) (nodal-reactive-power (node-struct-tag node)
-                                                                                  voltages-vector
-                                                                                  thetas-vector
-                                                                                  admittances-matrix)
+                                                                                             voltages-vector
+                                                                                             thetas-vector
+                                                                                             admittances-matrix)
                            (grid:gref delta-p-vector (node-struct-tag node)) (- (bond-struct-active-power (node-struct-bond node))
-                                                                     (grid:gref p-vector (node-struct-tag node)))
+                                                                                (grid:gref p-vector (node-struct-tag node)))
                            (grid:gref delta-q-vector (node-struct-tag node)) (- (bond-struct-reactive-power (node-struct-bond node))
-                                                                     (grid:gref q-vector (node-struct-tag node)))))
+                                                                                (grid:gref q-vector (node-struct-tag node)))))
                     (:v-theta
                      (setf (grid:gref p-vector (node-struct-tag node)) (nodal-active-power (node-struct-tag node)
-                                                                                voltages-vector
-                                                                                thetas-vector
-                                                                                admittances-matrix)
+                                                                                           voltages-vector
+                                                                                           thetas-vector
+                                                                                           admittances-matrix)
                            (grid:gref q-vector (node-struct-tag node)) (nodal-reactive-power (node-struct-tag node)
-                                                                                  voltages-vector
-                                                                                  thetas-vector
-                                                                                  admittances-matrix)
+                                                                                             voltages-vector
+                                                                                             thetas-vector
+                                                                                             admittances-matrix)
                            (grid:gref delta-p-vector (node-struct-tag node)) 0d0
                            (grid:gref delta-q-vector (node-struct-tag node)) 0d0))))
                  (:load
                   (case (bond-struct-kind (node-struct-bond node))
                     (:v=f(Q)
-                         ())
+                     ())
                     (:p-q
                      (setf (grid:gref p-vector (node-struct-tag node)) (nodal-active-power (node-struct-tag node)
-                                                                                voltages-vector
-                                                                                thetas-vector
-                                                                                admittances-matrix)
+                                                                                           voltages-vector
+                                                                                           thetas-vector
+                                                                                           admittances-matrix)
                            (grid:gref q-vector (node-struct-tag node)) (nodal-reactive-power (node-struct-tag node)
-                                                                                  voltages-vector
-                                                                                  thetas-vector
-                                                                                  admittances-matrix)
+                                                                                             voltages-vector
+                                                                                             thetas-vector
+                                                                                             admittances-matrix)
                            (grid:gref delta-p-vector (node-struct-tag node)) (- (- (bond-struct-active-power (node-struct-bond node)))
-                                                                     (grid:gref p-vector (node-struct-tag node)))
+                                                                                (grid:gref p-vector (node-struct-tag node)))
                            (grid:gref delta-q-vector (node-struct-tag node)) (- (- (bond-struct-reactive-power (node-struct-bond node)))
-                                                                     (grid:gref q-vector (node-struct-tag node)))))))
+                                                                                (grid:gref q-vector (node-struct-tag node)))))))
                  (:interconnection
                   (setf (grid:gref p-vector (node-struct-tag node)) (nodal-active-power (node-struct-tag node)
-                                                                             voltages-vector
-                                                                             thetas-vector
-                                                                             admittances-matrix)
+                                                                                        voltages-vector
+                                                                                        thetas-vector
+                                                                                        admittances-matrix)
                         (grid:gref q-vector (node-struct-tag node)) (nodal-reactive-power (node-struct-tag node)
-                                                                               voltages-vector
-                                                                               thetas-vector
-                                                                               admittances-matrix)
+                                                                                          voltages-vector
+                                                                                          thetas-vector
+                                                                                          admittances-matrix)
                         (grid:gref delta-p-vector (node-struct-tag node)) (- (grid:gref p-vector (node-struct-tag node)))
                         (grid:gref delta-q-vector (node-struct-tag node)) (- (grid:gref q-vector (node-struct-tag node)))))))
           (when ok?
@@ -403,18 +403,18 @@
              (dp/dv (v theta y k h)
                (if (= k h)
                    (loop
-                      for i from 0 below (grid:dim0 v)
-                      if (= i k)
-                        sum (* 2d0
-                               (abs (grid:gref v k))
-                               (abs (grid:gref y k k))
-                               (cos (phase (grid:gref y k k))))
-                      else
-                        sum (* (abs (grid:gref v i))
-                               (abs (grid:gref y k i))
-                               (cos (- (grid:gref theta k)
-                                       (grid:gref theta i)
-                                       (phase (grid:gref y k i))))))
+                     for i from 0 below (grid:dim0 v)
+                     if (= i k)
+                       sum (* 2d0
+                              (abs (grid:gref v k))
+                              (abs (grid:gref y k k))
+                              (cos (phase (grid:gref y k k))))
+                     else
+                       sum (* (abs (grid:gref v i))
+                              (abs (grid:gref y k i))
+                              (cos (- (grid:gref theta k)
+                                      (grid:gref theta i)
+                                      (phase (grid:gref y k i))))))
                    (* (grid:gref v k)
                       (abs (grid:gref y k h))
                       (cos (- (grid:gref theta k)
@@ -423,18 +423,18 @@
              (dq/dv (v theta y k h)
                (if (= k h)
                    (loop
-                      for i from 0 below (grid:dim0 v)
-                      if (= i k)
-                        sum (* -2d0
-                               (abs (grid:gref v k))
-                               (abs (grid:gref y k k))
-                               (sin (phase (grid:gref y k k))))
-                      else
-                        sum (* (abs (grid:gref v i))
-                               (abs (grid:gref y k i))
-                               (sin (- (grid:gref theta k)
-                                       (grid:gref theta i)
-                                       (phase (grid:gref y k i))))))
+                     for i from 0 below (grid:dim0 v)
+                     if (= i k)
+                       sum (* -2d0
+                              (abs (grid:gref v k))
+                              (abs (grid:gref y k k))
+                              (sin (phase (grid:gref y k k))))
+                     else
+                       sum (* (abs (grid:gref v i))
+                              (abs (grid:gref y k i))
+                              (sin (- (grid:gref theta k)
+                                      (grid:gref theta i)
+                                      (phase (grid:gref y k i))))))
                    (* (abs (grid:gref v k))
                       (abs (grid:gref y k h))
                       (sin (- (grid:gref theta k)
@@ -445,10 +445,10 @@
                  (when (> verbose 5)
                    (printout *standard-output* :message "entering update-dp/dtheta-matrix().~&")))
                (loop
-                  with node-a = nil
-                  with row = 0
-                  for i from 0 below (grid:dim0 theta)
-                  do
+                 with node-a = nil
+                 with row = 0
+                 for i from 0 below (grid:dim0 theta)
+                 do
                     (setq node-a (first (select-element :predicate (where-node :tag i)
                                                         :elements nodes)))
                     (when node-a
@@ -462,10 +462,10 @@
                                  ((q-v-p (node-struct-bond node-a)) t)
                                  ((v=f[Q]-p (node-struct-bond node-a)) t))))
                         (loop
-                           with node-b = nil
-                           with column = 0
-                           for j from 0 below (grid:dim0 theta)
-                           do
+                          with node-b = nil
+                          with column = 0
+                          for j from 0 below (grid:dim0 theta)
+                          do
                              (setq node-b (first (select-element :predicate (where-node :tag j)
                                                                  :elements nodes)))
                              (when node-b
@@ -489,10 +489,10 @@
                  (when (> verbose 5)
                    (printout *standard-output* :message "entering update-dq/dtheta-matrix().~&")))
                (loop
-                  with node-a = nil
-                  with row = 0
-                  for i from 0 below (grid:dim0 v)
-                  do
+                 with node-a = nil
+                 with row = 0
+                 for i from 0 below (grid:dim0 v)
+                 do
                     (setq node-a (first (select-element :predicate (where-node :tag i)
                                                         :elements nodes)))
                     (when node-a
@@ -506,10 +506,10 @@
                                  ((q-v-p (node-struct-bond node-a)) t)
                                  ((v=f[Q]-p (node-struct-bond node-a)) t))))
                         (loop
-                           with node-b = nil
-                           with column = 0
-                           for j from 0 below (grid:dim0 theta)
-                           do
+                          with node-b = nil
+                          with column = 0
+                          for j from 0 below (grid:dim0 theta)
+                          do
                              (setq node-b (first (select-element :predicate (where-node :tag j)
                                                                  :elements nodes)))
                              (when node-b
@@ -533,10 +533,10 @@
                  (when (> verbose 5)
                    (printout *standard-output* :message "entering update-dq/dv-matrix().~&")))
                (loop
-                  with node-a = nil
-                  with row = 0
-                  for i from 0 below (grid:dim0 v)
-                  do
+                 with node-a = nil
+                 with row = 0
+                 for i from 0 below (grid:dim0 v)
+                 do
                     (setq node-a (first (select-element :predicate (where-node :tag i)
                                                         :elements nodes)))
                     (when node-a
@@ -548,10 +548,10 @@
                                  ((p-q-p (node-struct-bond node-a)) t)
                                  ((v=f[Q]-p (node-struct-bond node-a)) t))))
                         (loop
-                           with node-b = nil
-                           with column = 0
-                           for j from 0 below (grid:dim0 v)
-                           do
+                          with node-b = nil
+                          with column = 0
+                          for j from 0 below (grid:dim0 v)
+                          do
                              (setq node-b (first (select-element :predicate (where-node :tag j)
                                                                  :elements nodes)))
                              (when node-b
@@ -573,10 +573,10 @@
                  (when (> verbose 5)
                    (printout *standard-output* :message "entering update-dp/dv-matrix().~&")))
                (loop
-                  with node-a = nil
-                  with row = 0
-                  for i from 0 below (grid:dim0 theta)
-                  do
+                 with node-a = nil
+                 with row = 0
+                 for i from 0 below (grid:dim0 theta)
+                 do
                     (setq node-a (first (select-element :predicate (where-node :tag i)
                                                         :elements nodes)))
                     (when node-a
@@ -588,10 +588,10 @@
                                  ((p-q-p (node-struct-bond node-a)) t)
                                  ((v=f[Q]-p (node-struct-bond node-a)) t))))
                         (loop
-                           with node-b = nil
-                           with column = 0
-                           for j from 0 below (grid:dim0 v)
-                           do
+                          with node-b = nil
+                          with column = 0
+                          for j from 0 below (grid:dim0 v)
+                          do
                              (setq node-b (first (select-element :predicate (where-node :tag j)
                                                                  :elements nodes)))
                              (when node-b
@@ -638,10 +638,10 @@
                                                                                   (grid:copy admittances-matrix)))
                                                          :name (symbol-name (gensym "dq/dv-thread-")))))
             (loop
-               for thread in jacobian-threads
-               do
+              for thread in jacobian-threads
+              do
                  (loop
-                    while (bt:thread-alive-p thread))
+                   while (bt:thread-alive-p thread))
                  (when (integerp verbose)
                    (when (> verbose 10)
                      (printout *standard-output*
@@ -728,10 +728,10 @@
         (bond-currents nil)
         (ok? nil))
     (loop
-       named nodes-loop
-       initially (setq ok? t)
-       for node in nodes
-       do
+      named nodes-loop
+        initially (setq ok? t)
+      for node in nodes
+      do
          (case (node-struct-kind node)
            (:generation
             (case (bond-struct-kind (node-struct-bond node))
@@ -798,21 +798,21 @@
                    (printout *standard-output* :message "Load P-Q bond ~a, current = ~s.~%" (bond-struct-name (node-struct-bond node)) bond-current))))))))
     (when ok?
       (loop
-         named bipoles-loop
-         initially (setq ok? t)
-         with voltage-across = nil
-         with nodes-numbers = nil
-         for bipole in bipoles
-         for i from 0
-         do
+        named bipoles-loop
+          initially (setq ok? t)
+        with voltage-across = nil
+        with nodes-numbers = nil
+        for bipole in bipoles
+        for i from 0
+        do
            (setq nodes-numbers (loop
-                                  with node = nil
-                                  for node-name in (bipole-struct-nodes bipole)
-                                  do
+                                 with node = nil
+                                 for node-name in (bipole-struct-nodes bipole)
+                                 do
                                     (setq node (first (select-element :predicate (where :name node-name)
                                                                       :elements nodes)))
-                                  unless (reference-p node)
-                                  collect (node-struct-tag node)))
+                                 unless (reference-p node)
+                                   collect (node-struct-tag node)))
            (setq voltage-across (case (length nodes-numbers)
                                   (2
                                    (- (* (grid:gref voltages-vector (second nodes-numbers))
@@ -954,19 +954,19 @@
             (if x-vector
                 (progn
                   (loop
-                     named solution-check-loop
-                     finally (setq ok? t)
-                     for i from 0 below (grid:dim0 x-vector)
-                     when (gsl:nanp (grid:gref x-vector i))
-                     do
-                       (when (integerp verbose)
-                         (when (> verbose 10)
-                           (printout *standard-output*
-                                     :error
-                                     "Solution element is not a number x(~a)!~&"
-                                     i)))
-                       (setq ok? nil)
-                       (return-from solution-check-loop))
+                    named solution-check-loop
+                    finally (setq ok? t)
+                    for i from 0 below (grid:dim0 x-vector)
+                    when (gsl:nanp (grid:gref x-vector i))
+                      do
+                         (when (integerp verbose)
+                           (when (> verbose 10)
+                             (printout *standard-output*
+                                       :error
+                                       "Solution element is not a number x(~a)!~&"
+                                       i)))
+                         (setq ok? nil)
+                         (return-from solution-check-loop))
                   (when ok?
                     (when (integerp verbose)
                       (when (> verbose 10)
@@ -1036,10 +1036,10 @@
       (printout *standard-output* :message "entering update-solution().~&")))
   (let ((ok? nil))
     (loop
-       named nodes-loop
-       finally (setq ok? t)
-       for node in (extract-nodes problem)
-       do
+      named nodes-loop
+      finally (setq ok? t)
+      for node in (extract-nodes problem)
+      do
          (case (node-struct-kind node)
            (:generation
             (case (bond-struct-kind (node-struct-bond node))
@@ -1111,31 +1111,31 @@
       (printout *standard-output* :message "entering check-power-tollerance().~&")))
   (let ((ok? nil))
     (loop
-       named nodes-loop
-       finally (setq ok? t)
-       for node in (extract-nodes problem)
-       unless (reference-p node)
-       do
-         (when (>= (abs (grid:gref delta-p-vector (node-struct-tag node)))
-                   (realpart (problem-struct-epsilon-power problem)))
-           (when (integerp verbose)
-             (when (> verbose 10)
-               (printout *standard-output*
-                         :message
-                         "active power is over the selected tolerance |~a| > ~a.~&"
-                         (grid:gref delta-p-vector (node-struct-tag node))
-                         (realpart (problem-struct-epsilon-power problem)))))
-           (return-from nodes-loop))
-         (when (>= (abs (grid:gref delta-q-vector (node-struct-tag node)))
-                   (imagpart (problem-struct-epsilon-power problem)))
-           (when (integerp verbose)
-             (when (> verbose 10)
-               (printout *standard-output*
-                         :message
-                         "reactive power is over the selected tolerance |~a| > ~a.~&"
-                         (grid:gref delta-q-vector (node-struct-tag node))
-                         (imagpart (problem-struct-epsilon-power problem)))))
-           (return-from nodes-loop)))
+      named nodes-loop
+      finally (setq ok? t)
+      for node in (extract-nodes problem)
+      unless (reference-p node)
+        do
+           (when (>= (abs (grid:gref delta-p-vector (node-struct-tag node)))
+                     (realpart (problem-struct-epsilon-power problem)))
+             (when (integerp verbose)
+               (when (> verbose 10)
+                 (printout *standard-output*
+                           :message
+                           "active power is over the selected tolerance |~a| > ~a.~&"
+                           (grid:gref delta-p-vector (node-struct-tag node))
+                           (realpart (problem-struct-epsilon-power problem)))))
+             (return-from nodes-loop))
+           (when (>= (abs (grid:gref delta-q-vector (node-struct-tag node)))
+                     (imagpart (problem-struct-epsilon-power problem)))
+             (when (integerp verbose)
+               (when (> verbose 10)
+                 (printout *standard-output*
+                           :message
+                           "reactive power is over the selected tolerance |~a| > ~a.~&"
+                           (grid:gref delta-q-vector (node-struct-tag node))
+                           (imagpart (problem-struct-epsilon-power problem)))))
+             (return-from nodes-loop)))
     (when ok?
       (when (integerp verbose)
         (when (> verbose 10)
@@ -1183,8 +1183,8 @@
     (when (> verbose 10)
       (printout stream-object :message "entering output-solution().~&")))
   (let* ((nodes (remove-if-not #'(lambda (x)
-                                  (typep x 'node-struct))
-                              (problem-struct-network problem)))
+                                   (typep x 'node-struct))
+                               (problem-struct-network problem)))
          (voltages nil)
          (powers nil))
     (multiple-value-setq (powers voltages)
@@ -1264,8 +1264,8 @@
         (ok? nil)
         (state 'idle))
     (loop
-       named state-machine-loop
-       do
+      named state-machine-loop
+      do
          (case state
            (idle
             (setq state 'get-input-data))
