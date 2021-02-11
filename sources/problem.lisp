@@ -27,6 +27,7 @@
 (defstruct (problem-struct (:constructor make-problem))
   (name "" :type (or symbol string null))
   (maximum-iterations-count 100 :type (integer 1))
+  (minimum-iterations-count 0 :type (integer 0))
   (epsilon-power nil :type (or real complex phasor-struct null))
   (alpha nil :type (or real null))
   (beta nil :type (or real null))
@@ -45,6 +46,7 @@
 (defun make-problem (&rest parameters &key
                                         (name (symbol-name (gensym "problem-")) name-p)
                                         (maximum-iterations-count 100 maximum-iterations-count-p)
+                                        (minimum-iterations-count 0 minimum-iterations-count-p)
                                         (epsilon-power #c(1d-3 1d-3) epsilon-power-p)
                                         (alpha nil alpha-p)
                                         (beta nil beta-p)
@@ -61,6 +63,7 @@
   (declare (ignorable parameters
                       name
                       maximum-iterations-count
+                      minimum-iterations-count
                       epsilon-power
                       alpha
                       beta
@@ -77,6 +80,9 @@
     (check-type name (or symbol string null)))
   (when maximum-iterations-count-p
     (check-type maximum-iterations-count (integer 1)))
+  (when minimum-iterations-count-p
+    (check-type minimum-iterations-count (integer 1)))
+  (assert (<= minimum-iterations-count maximum-iterations-count))
   (when epsilon-power-p
     (check-type epsilon-power (or real complex phasor-struct)))
   (when alpha-p
@@ -106,6 +112,7 @@
   (let ((object (allocate-instance (find-class 'problem-struct))))
     (setf (problem-struct-name object) name
           (problem-struct-maximum-iterations-count object) maximum-iterations-count
+          (problem-struct-minimum-iterations-count object) minimum-iterations-count
           (problem-struct-epsilon-power object) epsilon-power
           (problem-struct-alpha object) (if alpha
                                             alpha

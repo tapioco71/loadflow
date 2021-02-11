@@ -1234,21 +1234,30 @@
 (defun loadflow (&rest parameters &key
                                     (problem nil problem-p)
                                     (problem-file-pathname nil problem-file-pathname-p)
+                                    (maximum-iterations-count 0 maximum-iterations-count-p)
+                                    (minimum-iterations-count 0 minimum-iterations-count-p)
                                     (verbose nil verbose-p))
   (declare (ignorable parameters
+                      problem
                       problem-file-pathname
+                      minimum-iteration-count
                       verbose))
   (when (and problem-p problem-file-pathname)
     (error 'wrong-parameters-error :parameters (list problem problem-file-pathname)))
+  (when problem-p
+    (check-type problem problem-struct))
   (when problem-file-pathname-p
     (check-type problem-file-pathname pathname))
+  (when maximum-iterations-count-p
+    (check-type maximum-iterations-count (integer 1)))
+  (when minimum-iterations-count-p
+    (check-type minimum-iterations-count (integer 1)))
   (when verbose-p
     (check-type verbose (or integer null)))
   (when (and verbose-p
              (> verbose 5))
     (printout *standard-output* :message "entering loadflow().~&"))
-  (let ((problem nil)
-        (cv-matrix nil)
+  (let ((cv-matrix nil)
         (ctheta-matrix nil)
         (voltages-vector nil)
         (thetas-vector nil)
@@ -1271,7 +1280,9 @@
       do
          (case state
            (idle
-            (setq state 'get-input-data))
+            (if problem-p
+                (setq state 'setup-problem)
+                (setq state 'get-input-data)))
            (get-input-data
             (multiple-value-setq (problem ok?)
               (load-problem :problem-file-pathname problem-file-pathname
@@ -1282,7 +1293,24 @@
            (setup-problem
             (if (setup-problem :problem problem
                                :verbose verbose)
-                (setq state 'create-connection-matrices)
+                (progn
+                  (when maximum-iterations-count-p
+                    (when (integerp verbose)
+                      (when (> verbose 5)
+                        (printout *standard-output*
+                                  :warning "overriding problem maximum iterations count ~a with ~a.~&"
+                                  (problem-struct-maximum-iterations-count problem)
+                                  maximum-iterations-count)))
+                    (setf (problem-struct-maximum-iterations-count problem) maximum-iterations-count))
+                  (when minimum-iterations-count-p
+                    (when (integerp verbose)
+                      (when (> verbose 5)
+                        (printout *standard-output*
+                                  :warning "overriding problem minimum iterations count ~a with ~a.~&"
+                                  (problem-struct-minimum-iterations-count problem)
+                                  minimum-iterations-count)))
+                    (setf (problem-struct-minimum-iterations-count problem) minimum-iterations-count))
+                  (setq state 'create-connection-matrices))
                 (progn
                   (error 'problem-setup-error :problem-name (problem-struct-name problem))
                   (setq state 'exit-with-error))))
@@ -1377,7 +1405,9 @@
                 (progn
                   (when (integerp verbose)
                     (when (> verbose 10)
-                      (printout *standard-output* :error "maximum iterations count reached (~a). No solution.~&" (problem-struct-maximum-iterations-count problem))))
+                      (printout *standard-output*
+                                :error "maximum iterations count reached (~a). No solution.~&"
+                                (problem-struct-maximum-iterations-count problem))))
                   (setq state 'exit-with-error))
                 (progn
                   (when (integerp verbose)
@@ -1451,10 +1481,11 @@
                       (printout *standard-output* :error "could not compute power residuals.~&")))
                   (setq state 'exit-with-error))))
            (check-power-tolerance
-            (if (check-power-tolerance :problem problem
-                                       :delta-p-vector delta-p-vector
-                                       :delta-q-vector delta-q-vector
-                                       :verbose verbose)
+            (if (and (check-power-tolerance :problem problem
+                                            :delta-p-vector delta-p-vector
+                                            :delta-q-vector delta-q-vector
+                                            :verbose verbose)
+                     (> iteration (problem-struct-minimum-iterations-count problem)))
                 (setq state 'output-solution)
                 (progn
                   (incf iteration)

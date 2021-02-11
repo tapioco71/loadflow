@@ -269,3 +269,54 @@
       finally (return tr))))
 
 ;; Macros.
+
+(defmacro set-powers (node-powers network)
+  (let ((nodes (gensym "nodes-")))
+    `(loop
+       with modified-element = nil
+       for element in ,network
+       do
+          (setq modified-element element)
+          (when (typep modified-element 'node-struct)
+            (when (equalp (node-struct-kind modified-element) :load)
+              (when (node-struct-bond modified-element)
+                (when (equalp (bond-struct-kind (node-struct-bond modified-element)) :p-q)
+                  (loop
+                    named nodes-loop
+                    for node-power in ,node-powers
+                    do
+                       (destructuring-bind (&rest parameters &key
+                                                               (node-name nil node-name-p)
+                                                               (base-power nil base-power-p)
+                                                               (load-factor 1d0 load-factor-p))
+                           node-power
+                         (declare (ignorable parameters node-name base-power load-factor))
+                         (when node-name-p
+                           (check-type node-name (or symbol string keyword (unsigned-byte 64) null)))
+                         (when base-power-p
+                           (check-type base-power complex))
+                         (when load-factor-p
+                           (check-type load-factor real)
+                           (assert (and (>= load-factor 0d0)
+                                        (<= load-factor 10d0))))
+                         (when (equalp node-name
+                                       (node-struct-name modified-element))
+                           (setf (bond-struct-active-power (node-struct-bond modified-element)) (* load-factor (realpart base-power))
+                                 (bond-struct-reactive-power (node-struct-bond modified-element)) (* load-factor (imagpart base-power)))
+                           (return-from nodes-loop))))))))
+       collect modified-element)))
+
+(defmacro parametric-loadflow ((problem-file-pathname) &body body)
+  (let ((problem (gensym "problem-"))
+        (powers (gensym "powers-")))
+    `(let ((,problem (load-problem :problem-file-pathname ,problem-file-pathname))
+           (,powers nil))
+     (when ,problem
+       (loop
+         for b in ',body
+         do
+            (case (first b)
+              (:powers
+               (setq ,powers (eval (getf b :powers)))))
+            (setf (problem-struct-network ,problem) (set-powers ,powers (problem-struct-network ,problem))))
+       (lf:loadflow :problem ,problem)))))
