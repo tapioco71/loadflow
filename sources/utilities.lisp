@@ -1,22 +1,7 @@
 ;;;; -*- mode: Lisp; syntax: ANSI-Common-Lisp; indent-tabs-mode: nil; coding: utf-8; show-trailing-whitespace: t -*-
 ;;;; utilities.lisp
-;;;;
-;;;; Copyright (c) 2020 Angelo Rossi
-;;;;
-;; This file is part of Loadflow (LF).
-;;
-;;    Loadflow (LF) is free software: you can redistribute it and/or modify
-;;    it under the terms of the GNU General Public License as published by
-;;    the Free Software Foundation, either version 3 of the License, or
-;;    (at your option) any later version.
-;;
-;;    Loadflow (LF) is distributed in the hope that it will be useful,
-;;    but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;    GNU General Public License for more details.
-;;
-;;    You should have received a copy of the GNU General Public License
-;;    along with Loadflow (LF).  If not, see <http://www.gnu.org/licenses/>.
+;;;
+;;; Misc. utilities.
 
 (in-package #:loadflow)
 
@@ -91,7 +76,7 @@
 (defun make-line-pi-model (&rest parameters &key
                                            (line nil line-p)
                                            (frequency 50d0 frequency-p))
-  "Create a line model."
+  "Create a pi line model."
   (declare (ignorable parameters line frequency))
   (when line-p
     (check-type line line-struct))
@@ -234,6 +219,7 @@
 ;; Utilities
 
 (defun all-permutations (lst &optional (remain lst))
+  "Compute all possible permutations from a list."
   (cond ((null remain) nil)
         ((null (rest lst)) (list lst))
         (t (append
@@ -242,6 +228,7 @@
             (all-permutations (append (rest lst) (list (first lst))) (rest remain))))))
 
 (defun combinations (a)
+  "Create all possible combinations from a list."
   (let ((return-value nil))
     (loop
       for i from 0 below (length a)
@@ -252,13 +239,15 @@
               (setq return-value (append return-value (list (list (nth i a) (nth j a)))))))
     return-value))
 
-(defun rotate (a n)
+(defun rotate-elements (a n)
+  "Rotate elements in a list."
   (let ((x nil))
     (setq x (pop a))
     (when x
       (append a (list x)))))
 
 (defun matrix-trace (a)
+  "Compute the matrix trace value."
   (check-type a grid:foreign-array)
   (assert (= (length (grid:dimensions a)) 2))
   (when (= (grid:dim0 a)
@@ -271,6 +260,7 @@
 ;; Macros.
 
 (defmacro set-powers (node-powers network)
+  "Set power in the power nodes of the network."
   (let ((nodes (gensym "nodes-")))
     `(loop
        with modified-element = nil

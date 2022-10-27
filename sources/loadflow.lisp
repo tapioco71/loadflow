@@ -1,22 +1,7 @@
 ;;;; -*- mode: Lisp; syntax: ANSI-Common-Lisp; indent-tabs-mode: nil; coding: utf-8; show-trailing-whitespace: t -*-
 ;;;; loadflow.lisp
-;;;;
-;;;; Copyright (c) 2020 Angelo Rossi
-;;;;
-;; This file is part of Loadflow (LF).
-;;
-;;    Loadflow (LF) is free software: you can redistribute it and/or modify
-;;    it under the terms of the GNU General Public License as published by
-;;    the Free Software Foundation, either version 3 of the License, or
-;;    (at your option) any later version.
-;;
-;;    Loadflow (LF) is distributed in the hope that it will be useful,
-;;    but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;    GNU General Public License for more details.
-;;
-;;    You should have received a copy of the GNU General Public License
-;;    along with Loadflow (LF).  If not, see <http://www.gnu.org/licenses/>.
+;;;
+;;; Loadflow problem definitions and utilities.
 
 (in-package #:loadflow)
 
@@ -31,6 +16,7 @@
                                                    (voltages-vector nil voltages-vector-p)
                                                    (thetas-vector nil thetas-vector-p)
                                                    (verbose nil verbose-p))
+  "Assign initial solution to the problem."
   (declare (ignorable parameters
                       problem
                       voltages-vector
@@ -166,6 +152,7 @@
                                                      (delta-p-vector nil delta-p-vector-p)
                                                      (delta-q-vector nil delta-q-vector-p)
                                                      (verbose nil verbose-p))
+  "Calculate power residuals to use in Jacobian calculations."
   (declare (ignorable parameters
                       problem
                       admittances-matrix
@@ -238,7 +225,7 @@
                                                                                              admittances-matrix)
                            (grid:gref delta-p-vector (node-struct-tag node)) (- (bond-struct-active-power (node-struct-bond node))
                                                                                 (grid:gref p-vector (node-struct-tag node)))
-                           (grid:gref delta-q-vector (node-struct-tag node)) 0d0))
+                           (grid:gref delta-q-vector (node-struct-tag node)) 0d0)
                     (:q-v
                      (setf (grid:gref p-vector (node-struct-tag node)) (nodal-active-power (node-struct-tag node)
                                                                                            voltages-vector
@@ -274,7 +261,7 @@
                                                                                              thetas-vector
                                                                                              admittances-matrix)
                            (grid:gref delta-p-vector (node-struct-tag node)) 0d0
-                           (grid:gref delta-q-vector (node-struct-tag node)) 0d0))))
+                           (grid:gref delta-q-vector (node-struct-tag node)) 0d0)))))
                  (:load
                   (case (bond-struct-kind (node-struct-bond node))
                     (:v=f(Q)
@@ -331,6 +318,7 @@
                                               (voltages-vector nil voltages-vector-p)
                                               (thetas-vector nil thetas-vector-p)
                                               (verbose nil verbose-p))
+  "Calculate the complete Jacobian for the complete solution method."
   (declare (ignorable parameters
                       problem
                       dp/dtheta-matrix
@@ -899,6 +887,8 @@
                                         (jacobian-matrix nil jacobian-matrix-p)
                                         (cv-matrix nil cv-matrix-p)
                                         (ctheta-matrix nil ctheta-matrix-p)
+                                        (epsilon 1d-6 epsilon-p)
+                                        (maximum-refinement-iteration-count 1000 maximum-refinement-iteration-count-p)
                                         (verbose nil verbose-p))
   (declare (ignorable parameters
                       delta-p-vector
@@ -906,6 +896,8 @@
                       jacobian-matrix
                       cv-matrix
                       ctheta-matrix
+                      epsilon
+                      maximum-refinement-iteration-count
                       verbose))
   (when delta-p-vector-p
     (check-type delta-p-vector grid:foreign-array))
@@ -917,6 +909,11 @@
     (check-type cv-matrix grid:foreign-array))
   (when ctheta-matrix-p
     (check-type ctheta-matrix grid:foreign-array))
+  (when epsilon-p
+    (check-type epsilon real)
+    (assert (> epsilon 0.0)))
+  (when maximum-refinement-iteration-count-p
+    (check-type maximum-refinement-iteration-count (integer 1)))
   (when verbose-p
     (check-type verbose (or integer null)))
   (when (integerp verbose)
@@ -943,14 +940,31 @@
         (multiple-value-bind (lu-matrix permutation signum)
             (gsll:lu-decomposition (grid:copy jacobian-matrix))
           (declare (ignore signum))
-          (let ((initial-solution (gsll:lu-solve lu-matrix
+          (let ((residuals (grid:make-foreign-array 'double-float
+                                                    :dimensions (grid:dimensions y-vector)
+                                                    :initial-element 0d0))
+                (initial-solution (gsll:lu-solve (grid:copy lu-matrix)
                                                  (grid:copy y-vector)
                                                  permutation
                                                  t)))
-            (setq x-vector (gsll:lu-refine (grid:copy jacobian-matrix)
-                                           lu-matrix permutation
-                                           (grid:copy y-vector)
-                                           initial-solution))
+            (loop
+              named refinement-loop
+              for i from 0 below maximum-refinement-iteration-count
+              do
+                 (setq x-vector (gsll:lu-refine (grid:copy jacobian-matrix)
+                                                (grid:copy lu-matrix)
+                                                permutation
+                                                (grid:copy y-vector)
+                                                initial-solution
+                                                residuals))
+                 (when (integerp verbose)
+                   (when (> verbose 10)
+                     (printout *standard-output*
+                               :message
+                               "Residuals norm: ~a~&"
+                               (grid:norm residuals))))
+                 (when (< (grid:norm residuals) epsilon)
+                   (return-from refinement-loop)))
             (if x-vector
                 (progn
                   (loop
@@ -1154,6 +1168,7 @@
                                            (iterations-count nil iterations-count-p)
                                            (stream-object *standard-output* stream-object-p)
                                            (verbose nil verbose-p))
+  "Printout the computed solution for the powerflow problem."
   (declare (ignorable parameters
                       problem
                       voltages-vector
@@ -1234,13 +1249,25 @@
 (defun loadflow (&rest parameters &key
                                     (problem nil problem-p)
                                     (problem-file-pathname nil problem-file-pathname-p)
-                                    (maximum-iterations-count 0 maximum-iterations-count-p)
-                                    (minimum-iterations-count 0 minimum-iterations-count-p)
+                                    (maximum-iterations-count 10 maximum-iterations-count-p)
+                                    (minimum-iterations-count 1 minimum-iterations-count-p)
+                                    (alpha 1d0 alpha-p)
+                                    (beta 1d0 beta-p)
+                                    (epsilon-power #c(1d3 1d3) epsilon-power-p)
+                                    (epsilon 1d-6 epsilon-p)
+                                    (maximum-refinement-iteration-count 1000 maximum-refinement-iteration-count-p)
                                     (verbose nil verbose-p))
+  "The main function to solve the powerflow problem."
   (declare (ignorable parameters
                       problem
                       problem-file-pathname
-                      minimum-iteration-count
+                      maximum-iterations-count
+                      minimum-iterations-count
+                      alpha
+                      beta
+                      epsilon-power
+                      epsilon
+                      maximum-refinement-iteration-count
                       verbose))
   (when (and problem-p problem-file-pathname)
     (error 'wrong-parameters-error :parameters (list problem problem-file-pathname)))
@@ -1252,6 +1279,20 @@
     (check-type maximum-iterations-count (integer 1)))
   (when minimum-iterations-count-p
     (check-type minimum-iterations-count (integer 1)))
+  (when alpha-p
+    (check-type alpha real)
+    (assert (> alpha 0)))
+  (when beta-p
+    (check-type beta real)
+    (assert (> beta 0)))
+  (when epsilon-power-p
+    (check-type epsilon-power complex)
+    (assert (> (abs epsilon-power) 0)))
+  (when epsilon-p
+    (check-type epsilon real)
+    (assert (> epsilon 0.0)))
+  (when maximum-refinement-iteration-count-p
+    (check-type maximum-refinement-iteration-count (integer 1)))
   (when verbose-p
     (check-type verbose (or integer null)))
   (when (and verbose-p
@@ -1310,6 +1351,30 @@
                                   (problem-struct-minimum-iterations-count problem)
                                   minimum-iterations-count)))
                     (setf (problem-struct-minimum-iterations-count problem) minimum-iterations-count))
+                  (when alpha-p
+                    (when (integerp verbose)
+                      (when (> verbose 5)
+                        (printout *standard-output*
+                                  :warning "overriding problem alpha value ~a with ~a.~&"
+                                  (problem-struct-alpha problem)
+                                  alpha)))
+                    (setf (problem-struct-alpha problem) alpha))
+                  (when beta-p
+                    (when (integerp verbose)
+                      (when (> verbose 5)
+                        (printout *standard-output*
+                                  :warning "overriding problem beta value ~a with ~a.~&"
+                                  (problem-struct-beta problem)
+                                  alpha)))
+                    (setf (problem-struct-beta problem) beta))
+                  (when epsilon-power-p
+                    (when (integerp verbose)
+                      (when (> verbose 5)
+                        (printout *standard-output*
+                                  :warning "overriding problem epsilon power value ~a with ~a.~&"
+                                  (problem-struct-epsilon-power problem)
+                                  epsilon-power)))
+                    (setf (problem-struct-epsilon-power problem) epsilon-power))
                   (setq state 'create-connection-matrices))
                 (progn
                   (error 'problem-setup-error :problem-name (problem-struct-name problem))
@@ -1439,6 +1504,8 @@
                             :jacobian-matrix jacobian-matrix
                             :cv-matrix cv-matrix
                             :ctheta-matrix ctheta-matrix
+                            :epsilon epsilon
+                            :maximum-refinement-iteration-count maximum-refinement-iteration-count
                             :verbose verbose))
             (if ok? ;; system is solved.
                 (setq state 'update-solution)
@@ -1518,6 +1585,7 @@
     return-value))
 
 (defun main (argv)
+  "Main function which is called by the shell."
   (declare (ignore argv))
   (print (funcall #'loadflow argv))
   (sb-ext:quit :unix-status 0))
